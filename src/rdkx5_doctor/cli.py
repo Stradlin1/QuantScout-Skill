@@ -13,7 +13,7 @@ DEFAULT_RULESET = Path(__file__).parent / 'resources' / 'rulesets' / 'x5-bayes-e
 STATES = ['VIOLATION', 'NEEDS_VERIFICATION', 'NOT_COVERED', 'NO_VIOLATION_FOUND']
 
 def parser():
-    p = argparse.ArgumentParser(description='RDK X5 ONNX Doctor V1.2：纯终端、只读多算子静态诊断')
+    p = argparse.ArgumentParser(description='RDK X5 ONNX Doctor V1.3：纯终端、只读 Shape 推断与多算子静态诊断')
     sub = p.add_subparsers(dest='command', required=True)
     a = sub.add_parser('analyze', help='分析模型，终端摘要 + JSON/Markdown 报告')
     a.add_argument('--model', required=True, type=Path)
@@ -36,13 +36,15 @@ def parser():
         c.add_argument('--analysis', required=True, type=Path)
         c.add_argument('--node', required=True, help='内部 ID 或唯一的原始名称')
         c.add_argument('--json', action='store_true')
+    from .shape_queries import register_shape_commands
+    register_shape_commands(sub)
     register_commands(sub)
     return p
 
 def load_analysis(path):
     try:
         data = json.loads(path.read_text(encoding='utf-8'))
-        if data.get('schema_version') not in ('1.0', '1.1', '1.2'):
+        if data.get('schema_version') not in ('1.0', '1.1', '1.2', '1.3'):
             raise ValueError('不支持的 analysis schema_version')
         if not all(isinstance(data.get(key), list) for key in ('nodes','tensors','edges','diagnostics','traces')):
             raise ValueError('analysis 缺少节点、Tensor、边或诊断列表')
@@ -140,6 +142,9 @@ def display(value):
 def main(argv=None):
     args = parser().parse_args(argv)
     try:
+        if args.command in ('shapes','shape'):
+            from .shape_queries import run_shape_query
+            return run_shape_query(args,load_analysis(args.analysis),display)
         if args.command in ('tensors','tensor','candidates','candidate'):
             return run_query(args, load_analysis(Path(args.analysis)), display=display, node_trace=node_trace)
         if args.command in ('nodes','inspect','trace'):

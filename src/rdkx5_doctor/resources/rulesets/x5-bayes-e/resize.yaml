@@ -1,0 +1,118 @@
+ruleset_id: x5-bayes-e-onnx-resize
+ruleset_version: 0.1.0
+model_domain: ''
+operator: Resize
+scope: standard_onnx
+source_document: X5 芯片用户手册
+source_version: 1.1.2
+source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+toolchain_version: unverified
+opset_min: 10
+opset_max: 13
+rules:
+- id: X5-RESIZE-RANK
+  field: resize_input_rank
+  check_type: equals
+  value: 4
+  operator: Resize
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / Resize / X5 BPU 支持约束
+  reason_code: RESIZE_INPUT_RANK
+  checkability: auto_check
+  message: Documented static X5 BPU path constraint; not a compiler verdict
+- id: X5-RESIZE-RESIZE-LAYOUT-NCHW
+  field: resize_layout_nchw
+  check_type: equals
+  value: true
+  operator: Resize
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / Resize / X5 BPU 支持约束
+  reason_code: RESIZE_LAYOUT_NCHW
+  checkability: auto_check
+  message: Documented static X5 BPU path constraint; not a compiler verdict
+- id: X5-RESIZE-RESIZE-SPATIAL-ONLY
+  field: resize_spatial_only
+  check_type: equals
+  value: true
+  operator: Resize
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / Resize / X5 BPU 支持约束
+  reason_code: RESIZE_SPATIAL_ONLY
+  checkability: auto_check
+  message: Documented static X5 BPU path constraint; not a compiler verdict
+- id: X5-RESIZE-MODE
+  field: resize_mode
+  check_type: one_of
+  values:
+  - nearest
+  - linear
+  operator: Resize
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / Resize / X5 BPU 支持约束
+  reason_code: RESIZE_MODE
+  checkability: auto_check
+  message: Documented static X5 BPU path constraint; not a compiler verdict
+- id: X5-RESIZE-COORDINATES
+  field: resize_coordinate_mode
+  check_type: one_of
+  values:
+  - half_pixel
+  - pytorch_half_pixel
+  - asymmetric
+  - align_corners
+  - tf_crop_and_resize
+  operator: Resize
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / Resize / X5 BPU 支持约束
+  reason_code: RESIZE_COORDINATE_MODE
+  checkability: auto_check
+  message: Documented static X5 BPU path constraint; not a compiler verdict
+- id: X5-RESIZE-RESIZE-NEAREST-ENLARGEMENT-OK
+  field: resize_nearest_enlargement_ok
+  check_type: equals
+  value: true
+  when:
+    field: resize_mode
+    op: equals
+    value: nearest
+  operator: Resize
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / Resize / X5 BPU 支持约束
+  reason_code: RESIZE_NEAREST_ENLARGEMENT_OK
+  checkability: auto_check
+  message: Documented static X5 BPU path constraint; not a compiler verdict
+- id: X5-RESIZE-RESIZE-ROI-OK
+  field: resize_roi_ok
+  check_type: equals
+  value: true
+  when:
+    field: resize_coordinate_mode
+    op: equals
+    value: tf_crop_and_resize
+  operator: Resize
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / Resize / X5 BPU 支持约束
+  reason_code: RESIZE_ROI_OK
+  checkability: auto_check
+  message: Documented static X5 BPU path constraint; not a compiler verdict

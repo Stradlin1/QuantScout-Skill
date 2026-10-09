@@ -8,6 +8,9 @@ FIELDS_BY_OPERATOR = {
     'Slice': {'slice_parameters_fixed'},
     'Add': {'min_input_rank', 'max_input_rank', 'output_rank', 'constant_count_ok', 'broadcast_mergeable', 'shortcut_review'},
     'Mul': {'min_input_rank', 'max_input_rank', 'output_rank', 'constant_count_ok', 'broadcast_mergeable'},
+    'MatMul': {'matmul_rank_relation_ok','matmul_matrix_dims_within_limits','matmul_higher_dims_within_limits','matmul_broadcast_pattern_supported'},
+    'Softmax': {'softmax_input_rank','softmax_axis','run_on_bpu_verified'},
+    'Resize': {'resize_input_rank','resize_layout_nchw','resize_spatial_only','resize_mode','resize_coordinate_mode','resize_nearest_enlargement_ok','resize_roi_ok'},
     'Gemm': {'conversion_layout_known'},
 }
 ALL_FIELDS = set().union(*FIELDS_BY_OPERATOR.values())

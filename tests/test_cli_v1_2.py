@@ -24,7 +24,7 @@ def test_real_historical_queries(schema,capsys):
 def test_coverage_and_per_rule_evidence(make_model):
     registry,manifest=load_ruleset(DEFAULT_RULESET)
     data=analyze(read_model(make_model(branch=True)),registry,manifest)
-    assert data['schema_version']=='1.2'
+    assert data['schema_version']=='1.3'
     summary=data['summary']
     assert summary['covered_node_count']+summary['uncovered_node_count']==data['model']['node_count']
     assert sum(summary['all_status_counts'].values())==data['model']['node_count']

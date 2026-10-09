@@ -1,7 +1,7 @@
 platform: RDK X5
 march: bayes-e
 ruleset_id: x5-bayes-e-onnx-multiop
-ruleset_version: 0.2.0
+ruleset_version: 0.3.0
 retrieved_at: '2026-10-09'
 toolchain_version: unverified
 review_status: reviewed_with_exclusions
@@ -75,3 +75,24 @@ operators:
     source_version: 1.1.2
     opset_min: 7
     opset_max: 23
+  MatMul:
+    file: matmul.yaml
+    ruleset_id: x5-bayes-e-onnx-matmul
+    version: 0.1.0
+    source_version: 1.1.2
+    opset_min: 9
+    opset_max: 13
+  Softmax:
+    file: softmax.yaml
+    ruleset_id: x5-bayes-e-onnx-softmax
+    version: 0.1.0
+    source_version: 1.1.2
+    opset_min: 10
+    opset_max: 13
+  Resize:
+    file: resize.yaml
+    ruleset_id: x5-bayes-e-onnx-resize
+    version: 0.1.0
+    source_version: 1.1.2
+    opset_min: 10
+    opset_max: 13

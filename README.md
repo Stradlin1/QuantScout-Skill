@@ -1,8 +1,8 @@
 # RDK X5 ONNX Doctor
 
-**纯终端、只读**的 ONNX 静态诊断工具（V1.2）。根据版本化官方规则定位异常节点，沿 Tensor 依赖追踪到模型输出，提供终端搜索、过滤、节点详情和路径查询；保存 `analysis.json` 与 `report.md`。V1.1 新增输出/中间 Tensor 理论原始载荷统计与五种结构优化候选。
+**纯终端、只读**的 ONNX 静态诊断工具（V1.3）。根据版本化官方规则定位异常节点，沿 Tensor 依赖追踪到模型输出，提供终端搜索、过滤、节点详情和路径查询；保存 `analysis.json` 与 `report.md`。V1.1 新增输出/中间 Tensor 理论原始载荷统计与五种结构优化候选。
 
-V1 未经过 OpenExplorer/hb_mapper 实测，不能保证 BPU 执行、量化精度或性能。不评分、不改写模型、不执行 Docker/量化。V1.2 检查 Conv、Mul、Sigmoid、Add、Concat、Slice、Gemm；其余算子解析展示但不检查。根据用户最新要求，**不生成 graph.html，不包含前端、浏览器交互或 Netron 依赖**。
+V1 未经过 OpenExplorer/hb_mapper 实测，不能保证 BPU 执行、量化精度或性能。不评分、不改写模型、不执行 Docker/量化。V1.3 检查 Conv、Mul、Sigmoid、Add、Concat、Slice、Gemm、MatMul、Softmax、Resize；其余算子解析展示但不检查。根据用户最新要求，**不生成 graph.html，不包含前端、浏览器交互或 Netron 依赖**。
 
 ## 安装（Ubuntu / Python ≥3.10）
 
@@ -82,7 +82,7 @@ python -m rdkx5_doctor candidate --analysis reports/demo-v1_1/analysis.json --id
 
 局部无变化分类为 SEMANTICALLY_REDUNDANT；融合/接口/共享分支为 REVIEW_REQUIRED；无法证明的观察为 INSUFFICIENT_INFORMATION。候选含实际内部 ID/Tensor、证据、条件、阻碍、重叠关系与未来验证步骤；没有删除或重写节点。需未来 ONNX checker、输出接口/shape 和 ONNX Runtime 数值对比。候选最后节点的下游输出仅在 candidate 查询时计算。
 
-新报告 schema=1.2，nodes/inspect/trace 仍接受 1.0/1.1；资源和候选查询接受 1.1/1.2。旧报告无法查询新资源/候选，需重跑 analyze。保持原有 Conv2D 规则不变。版本与字段见 [schema 文档](docs/ANALYSIS_SCHEMA_V1_1.md)，语义与支持范围见 [ONNX 来源](references/optimization_semantics.md)。
+新报告 schema=1.3，nodes/inspect/trace 仍接受 1.0/1.1/1.2；资源和候选查询接受 1.1/1.2/1.3。旧报告无法查询新资源/候选，需重跑 analyze。保持原有 Conv2D 规则不变。版本与字段见 [schema 文档](docs/ANALYSIS_SCHEMA_V1_1.md)，语义与支持范围见 [ONNX 来源](references/optimization_semantics.md)。
 
 自带第二示例识别五种模式，prediction 原始载荷为 128 B；完整示例在 [examples/v1_1_demo-report](examples/v1_1_demo-report)。历史 V1 demo-report 保留 1.0 格式用于兼容性验证。
 
@@ -101,7 +101,7 @@ Skill 调用确定性 Python 工具、读取机器事实，再生成节点绑定
 | VIOLATION | 至少一条已收录官方约束有确定 FAIL |
 | NO_VIOLATION_FOUND | 已执行规则未发现违规，不是 BPU 兼容保证 |
 | NEEDS_VERIFICATION | 关键元信息未知、不一致或量化条件无法确认 |
-| NOT_COVERED | 非 Conv 或非 Conv2D，V1 未提供检查 |
+| NOT_COVERED | 没有适用的已注册规则，不能视为通过 |
 
 逐规则返回 PASS / FAIL / UNKNOWN / NOT_APPLICABLE。自动检查 kernel H/W、每组体积、stride、dilation、有效 padding、膨胀 stride/整除条件。实际量化输出 int8、超常规通道条件保留 UNKNOWN。Conv→Add shortcut 措辞有版本差异，不自动套用。CPU 支持列条款不作为 BPU 条款。
 
@@ -136,3 +136,20 @@ JSON 记录完整节点/Tensor/逐规则证据，Markdown 优先展示覆盖矩�
 普通报告和日志保存在忽略的 `reports/`；历史生成报告仅解除 Git 跟踪，本地保留。结构、算子或导出方式建议必须回到训练/导出工程修改，再导出复检；本项目不修改 ONNX。静态规则通过不代表编译器/BPU 已验证，未知不能视为通过。
 
 按本次用户要求，开发期间可同步 Markdown 供线上审查；开发结束后的模型检测报告和真实验收摘要仅保存在忽略的 reports/，不纳入 Git。
+
+## V1.3 Shape 与 attention/Resize
+
+包0.4.0、schema1.3、Registry0.3.0；十类算子共49条规则。Conv及六类V1.2子包不变，MatMul4条、Softmax3条、Resize7条。
+
+```bash
+python -m rdkx5_doctor shapes --analysis reports/model/analysis.json --summary
+python -m rdkx5_doctor shapes --analysis reports/model/analysis.json --status PARTIAL --limit 20
+python -m rdkx5_doctor shape --analysis reports/model/analysis.json --tensor '<tensor_name>' --json
+python -m rdkx5_doctor rules list --operator MatMul --json
+```
+
+有界整数值与 Shape 元信息是不同事实。仅计算 Shape 参数依赖链：64元素、4096编码字节、64依赖深度、2048节点、4传播轮、64未知回溯节点。支持固定/部分 Shape、Gather、整数运算、Concat、Squeeze/Unsqueeze、无损整数Cast、Slice及Reshape；外部/可覆盖/超预算值保持未知。经过审查的下游算子使用元信息证明，原始整数维度冲突不覆盖。FP32/FP64 Resize参数使用独立有界解码。
+
+MatMul使用官方非对称广播与维度限制，区分ONNX合法广播。Softmax区分opset11/13语义、静态路径和未验证run_on_bpu。Resize布局需证据，nearest放大条件不套到缩小。缺失形状通常需要调查分析器，不强迫改变模型；任何建议限架构方向，不搜索训练工程或生成源码补丁。
+
+详见 [schema](docs/ANALYSIS_SCHEMA_V1_3.md)、[报告策略](docs/REPORT_POLICY_V1_3.md)、[来源](references/x5_attention_resize_sources.md)、[开发日志](docs/RDK_X5_ONNX_Doctor_V1_3_Development_Log.md)。全部模型验收结果仅在忽略的reports/。

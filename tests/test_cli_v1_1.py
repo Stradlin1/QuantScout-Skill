@@ -24,7 +24,7 @@ def test_extended_schema_unchanged_v1_diagnostics(report):
     path,model,out=report
     data=load_analysis(path)
     baseline=json.loads((Path(__file__).parents[1]/'examples/demo-report/analysis.json').read_text())
-    assert data['schema_version']=='1.2'
+    assert data['schema_version']=='1.3'
     assert set(baseline)<=set(data)
     for result,old in zip(data['diagnostics'][0]['results'],baseline['diagnostics'][0]['results']):
         assert {key:result[key] for key in old}==old
@@ -34,7 +34,7 @@ def test_extended_schema_unchanged_v1_diagnostics(report):
     for c in data['optimization_candidates']['candidates']:
         assert c['candidate_id'] in md
     assert 'INSUFFICIENT_INFORMATION' in md
-    assert data['ruleset']['version']=='0.2.0'
+    assert data['ruleset']['version']=='0.3.0'
     assert load_ruleset(DEFAULT_RULESET)[0].by_operator['Conv'].ruleset_version==baseline['ruleset']['version']
 
 

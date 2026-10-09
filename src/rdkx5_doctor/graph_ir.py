@@ -11,6 +11,8 @@ class GraphIR:
     warnings: list[str]
     small_constants: dict = field(default_factory=dict)
 
+    numeric_constants: dict = field(default_factory=dict)
+
     def topology(self):
         graph = nx.DiGraph()
         graph.add_nodes_from(n['id'] for n in self.nodes)

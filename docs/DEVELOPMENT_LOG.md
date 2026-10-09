@@ -128,3 +128,7 @@ CLI V1.1 子集 13 passed：新/旧协议、过滤/排序、未知数、四个 -
 打包命令 `.venv/bin/python -m build --no-isolation`（利用已安装构建依赖）成功构建 wheel/sdist。创建 `/tmp/rdkx5-v12-wheel-validation` 新环境，下载依赖后仅从本地 wheelhouse 安装，在 `/tmp` 工作目录执行 --help/rules validate/rules list/真实 analyze；包来源明确为独立环境 site-packages。下载初次被沙箱禁止本地代理连接，按权限流程获批后重试成功；没有绕过限制。完整命令、退出码、stdout/stderr 保留在忽略的 reports/。
 
 P18 最终全量测试：234 passed in 6.32s。最终 wheel/sdist 再构建成功，独立环境重装最终 wheel 后 rules validate 和真实 analyze 均成功，分析 JSON 与源码环境完全一致。git diff --check 通过。模型详细结果按用户要求仅保留本地 reports/REAL_ONNX_V1_2_VALIDATION.md（实际目录为独立带时间戳子目录）；未建立 tracked 模型验收摘要。
+
+## V1.3
+
+P19–P27 bounded Shape provenance and MatMul/Softmax/Resize development is recorded in `RDK_X5_ONNX_Doctor_V1_3_Development_Log.md`. The source model and model-specific reports remain local; this log contains implementation/testing information only. Prior V1/V1.1/V1.2 history is preserved.

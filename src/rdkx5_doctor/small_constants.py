@@ -17,7 +17,7 @@ def decode_integer_tensor(tensor):
         return fail('External data is never decoded by the small-constant resolver')
     if tensor.data_type not in (TensorProto.INT32, TensorProto.INT64):
         return fail('Only inline signed INT32/INT64 constants are supported')
-    if any(d < 0 for d in tensor.dims):
+    if len(tensor.dims) > 64 or any(d < 0 for d in tensor.dims):
         return fail('Malformed constant dimensions')
     count = prod(tensor.dims)
     if count > MAX_ELEMENTS:
@@ -42,6 +42,18 @@ def collect_shape_constants(model):
                  and n.op_type == 'Reshape' and len(n.input) > 1 and n.input[1]}
     requested.update(name for n in model.graph.node if n.domain in ('', 'ai.onnx')
                      and n.op_type == 'Slice' for name in n.input[1:5] if name)
+    # Decode only constants in bounded shape-parameter cones. Shape stops
+    # the backwards walk: its feature input values are never requested.
+    producers={x:n for n in model.graph.node for x in n.output}
+    requested.update(x for n in model.graph.node if n.op_type=='Resize' and n.domain in ('','ai.onnx') for x in n.input[3:4] if x)
+    stack=[(x,0) for x in requested];seen=set()
+    while stack and len(seen)<2048:
+        name,depth=stack.pop()
+        if name in seen or depth>64:continue
+        seen.add(name);node=producers.get(name)
+        if node and node.domain in ('','ai.onnx') and node.op_type!='Shape':
+            stack.extend((x,depth+1) for x in node.input if x)
+    requested=seen
     result = {name: {'status': 'UNKNOWN', 'values': None, 'reason': 'Target is not a supported inline constant'} for name in sorted(requested)}
     inputs = {v.name for v in model.graph.input}
     for init in model.graph.initializer:
@@ -59,6 +71,8 @@ def collect_shape_constants(model):
         if value is not None and value.type == AttributeProto.TENSOR:
             result[name] = decode_integer_tensor(value.t)
             result[name]['source'] = 'Constant.value'
+        elif 'value_int' in attrs:
+            result[name] = {'status':'KNOWN','values':[attrs['value_int'].i], 'shape':[], 'dtype':'int64','source':'Constant.value_int','reason':None}
         elif 'value_ints' in attrs:
             values = attrs['value_ints'].ints
             if len(values) <= MAX_ELEMENTS and attrs['value_ints'].ByteSize() <= MAX_ENCODED_BYTES:

@@ -2,6 +2,7 @@
 import onnx
 
 VERIFIED_SCHEMAS = {
+    'MatMul': {9,13}, 'Softmax': {1,11,13}, 'Resize': {10,11,13},
     'Sigmoid': {6, 13}, 'Concat': {4, 11, 13}, 'Slice': {10, 11, 13},
     'Add': {7, 13, 14}, 'Mul': {7, 13, 14}, 'Gemm': {7, 9, 11, 13},
 }
@@ -60,4 +61,10 @@ def extract_operator(ir, node, node_index=None):
     if node['op_type'] in ('Sigmoid','Concat','Slice'):extract_shape_op(ir,node,facts)
     elif node['op_type'] in ('Add','Mul'):extract_elementwise(ir,node,facts,node_index)
     elif node['op_type']=='Gemm':extract_gemm(ir,node,facts)
+    elif node['op_type'] in ('MatMul','Softmax'):
+        from .attention_op_extractor import extract_attention
+        extract_attention(ir,node,facts)
+    elif node['op_type']=='Resize':
+        from .resize_op_extractor import extract_resize
+        extract_resize(ir,node,facts)
     return facts

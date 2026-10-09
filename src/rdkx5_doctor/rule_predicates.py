@@ -53,3 +53,8 @@ PREDICATES = {
     'x5_elementwise_broadcast_mergeable': x5_elementwise_broadcast_mergeable,
     'at_most_one_fixed_constant_input': at_most_one_fixed_constant_input,
 }
+
+def matmul_broadcast_pattern_supported(fields):
+    from .attention_op_extractor import matmul_broadcast_pattern_supported as predicate
+    return predicate(fields)
+PREDICATES['matmul_broadcast_pattern_supported']=matmul_broadcast_pattern_supported

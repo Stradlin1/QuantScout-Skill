@@ -1,0 +1,64 @@
+ruleset_id: x5-bayes-e-onnx-matmul
+ruleset_version: 0.1.0
+model_domain: ''
+operator: MatMul
+scope: standard_onnx
+source_document: X5 芯片用户手册
+source_version: 1.1.2
+source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+toolchain_version: unverified
+opset_min: 9
+opset_max: 13
+rules:
+- id: X5-MATMUL-MATMUL-RANK-RELATION-OK
+  field: matmul_rank_relation_ok
+  check_type: equals
+  value: true
+  operator: MatMul
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / MatMul / X5 BPU 支持约束
+  reason_code: MATMUL_RANK_RELATION_OK
+  checkability: auto_check
+  message: Documented static X5 BPU path constraint; not a compiler verdict
+- id: X5-MATMUL-MATMUL-MATRIX-DIMS-WITHIN-LIMITS
+  field: matmul_matrix_dims_within_limits
+  check_type: equals
+  value: true
+  message: Trailing input axes within [1,8192]
+  operator: MatMul
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / MatMul / X5 BPU 支持约束
+  reason_code: MATMUL_MATRIX_DIMS_WITHIN_LIMITS
+  checkability: auto_check
+- id: X5-MATMUL-MATMUL-HIGHER-DIMS-WITHIN-LIMITS
+  field: matmul_higher_dims_within_limits
+  check_type: equals
+  value: true
+  message: Leading input axes within [1,4096]
+  operator: MatMul
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / MatMul / X5 BPU 支持约束
+  reason_code: MATMUL_HIGHER_DIMS_WITHIN_LIMITS
+  checkability: auto_check
+- id: X5-MATMUL-BROADCAST-PATTERN
+  field: matmul_broadcast_pattern_supported
+  check_type: predicate
+  predicate: matmul_broadcast_pattern_supported
+  operator: MatMul
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / MatMul / X5 BPU 支持约束
+  reason_code: MATMUL_BROADCAST_PATTERN_SUPPORTED
+  checkability: auto_check
+  message: Documented static X5 BPU path constraint; not a compiler verdict

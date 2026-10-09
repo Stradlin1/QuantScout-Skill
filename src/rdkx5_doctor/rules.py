@@ -90,7 +90,7 @@ class RuleSet(Strict):
     ruleset_id: str
     ruleset_version: str
     model_domain: str
-    operator: Literal['Conv', 'Sigmoid', 'Concat', 'Slice', 'Add', 'Mul', 'Gemm']
+    operator: Literal['Conv', 'Sigmoid', 'Concat', 'Slice', 'Add', 'Mul', 'Gemm', 'MatMul', 'Softmax', 'Resize']
     scope: Literal['input_rank_4', 'standard_onnx']
     source_document: str
     source_version: str
@@ -115,8 +115,9 @@ class RuleSet(Strict):
         for rule in self.rules:
             if rule.predicate is not None:
                 predicate_fields = {'x5_elementwise_broadcast_mergeable': 'broadcast_mergeable',
-                                    'at_most_one_fixed_constant_input': 'constant_count_ok'}
-                if self.operator not in ('Add', 'Mul') or rule.field != predicate_fields[rule.predicate]:
+                                    'at_most_one_fixed_constant_input': 'constant_count_ok',
+                                    'matmul_broadcast_pattern_supported':'matmul_broadcast_pattern_supported'}
+                if self.operator not in (('MatMul',) if rule.predicate=='matmul_broadcast_pattern_supported' else ('Add','Mul')) or rule.field != predicate_fields[rule.predicate]:
                     raise ValueError('谓词不属于对应算子/字段')
             if rule.field not in FIELDS_BY_OPERATOR[self.operator] or (rule.when and rule.when.field not in FIELDS_BY_OPERATOR[self.operator]):
                 raise ValueError('规则字段不属于对应算子')
@@ -253,7 +254,7 @@ def load_ruleset(directory):
                 by_operator[operator] = op
             if 'Conv' not in by_operator:
                 raise ValueError('必须保留 Conv 注册')
-            if manifest.ruleset_version != '0.2.0':
+            if manifest.ruleset_version not in ('0.2.0','0.3.0'):
                 raise ValueError('多算子 Registry 总版本不匹配')
     except Exception as exc:
         raise ValueError(f'规则集校验失败（{directory}）：{exc}') from exc
@@ -403,5 +404,5 @@ def check_operator(ir, node, registry, node_index=None):
                           unverified=['toolchain_version=unverified; 未测量 CPU/BPU 分配或量化精度'])
         for suggestion in diagnostic['suggestions']:
             if diagnostic['status']=='VIOLATION':
-                suggestion['text']='回到训练/导出工程的原模型定义/forward/导出逻辑实施修改，重新导出后复检。'+suggestion['text']
+                suggestion['text']='仅提供架构/导出方向；若决定改变模型，由所有者在独立原工程实施并重新导出对比；本项目不查找源码或生成补丁。'+suggestion['text']
     return diagnostic

@@ -29,7 +29,7 @@ def markdown(data, violation_limit=50, representative_limit=10):
     model,rules,summary=data['model'],data['ruleset'],data['summary']
     nodes={n['id']:n for n in data['nodes']}
     records={t['name']:t for t in data['resource_analysis']['tensor_records']}
-    lines=['# RDK X5 ONNX Doctor V1.2 分析报告','',
+    lines=['# RDK X5 ONNX Doctor V1.3 分析报告','',
            '**静态规则检查不是工具链 CPU/BPU 分配，也不意味着模型不能运行。未经过 OpenExplorer/hb_mapper 实测。**','',
            '## 0. 执行范围与核心结论','',
            f"模型 `{safe(Path(model['path']).name)}`；SHA256 `{model['sha256']}`（仅 ONNX protobuf）。",
@@ -38,11 +38,11 @@ def markdown(data, violation_limit=50, representative_limit=10):
            f"Registry {safe(rules['version'])}；子版本 {safe(rules['operator_rule_versions'])}；工具链 {safe(rules['toolchain_version'])}，verified=false。",
            '覆盖表示静态规则范围，不是 BPU 运行比例。','',
            '## 1. 算子覆盖与结论矩阵','',
-           '| 算子 | 数量 | 已检查无违规 | 违反硬约束 | 待验证 | 未覆盖 | 规则 / 来源版本 |',
-           '|---|---|---|---|---|---|---|']
+           '| 算子 | 数量 | 已检查无违规 | 违反硬约束 | 待验证 | 未覆盖 | 规则 / 来源版本 | AUTO / PARTIAL / NOT |',
+           '|---|---|---|---|---|---|---|---|']
     for row in summary['operator_coverage']:
         counts=row['status_counts']
-        lines.append('| '+ ' | '.join([safe(row['operator']),str(row['node_count']),*[str(counts[s]) for s in STATES],safe(row['rule_version'])+' / '+safe(row['source_version'])])+' |')
+        lines.append('| '+ ' | '.join([safe(row['operator']),str(row['node_count']),*[str(counts[s]) for s in STATES],safe(row['rule_version'])+' / '+safe(row['source_version']),safe(row.get('coverage_counts',{}))])+' |')
     lines+=['','四状态按节点守恒；NO_VIOLATION_FOUND 只说明已执行条件未发现违规。','',
             '## 2. 确定违反 BPU 约束的节点','']
     violations=[d for d in data['diagnostics'] if d['status']=='VIOLATION']
@@ -56,7 +56,7 @@ def markdown(data, violation_limit=50, representative_limit=10):
             lines.append(f"- `{r['rule_id']}`：实际 {safe(r['actual'])}；允许 {safe(r['expected'])}；{safe(r['reason'])}。证据 {safe(r['evidence'])}；[{safe(source['document'])}]({source['url']}) / {safe(source['version'])} / {safe(source['section'])}。")
         trace=next((t for t in data['traces'] if t['node_id']==nid),None)
         if trace:lines.append(f"可达输出 {safe(trace['reachable_outputs'])}；前驱 {safe(trace['predecessors'])} / 后继 {safe(trace['successors'])}。完整 Tensor 代表路径在 JSON/trace；依赖不表示下游同样违规。")
-        lines+=['回源位置：训练模型定义/forward 或导出脚本；本项目不修改 ONNX。','']
+        lines+=['仅可提出架构/导出方向；修改须在独立原工程实施、重新导出并对比，本项目不定位训练源码或修改 ONNX。','']
     if not violations:lines.append('已收录且实际执行的 X5 BPU 约束未发现确定违规；尚有未覆盖/待验证项。')
     elif len(violations)>violation_limit:lines.append(f'其余 {len(violations)-violation_limit} 个违规节点请用 CLI/JSON 查看；完整事实未截断。')
     lines+=['','## 3. 需要更多元信息或工具链确认','',
@@ -67,6 +67,7 @@ def markdown(data, violation_limit=50, representative_limit=10):
         sample=', '.join(ids[:representative_limit])+(f'；其余 {omitted} 个用 CLI/JSON 查看' if omitted>0 else '')
         lines.append(f"| {safe(group['operator'])} / {safe(group['reason_code'])} | {len(ids)} | {sample} | {safe(group['reason'])} |")
     if not groups:lines.append('| — | 0 | — | 无阻碍性未知项 |')
+    lines += shape_sections(data, representative_limit)
     lines+=['','同一节点可在多个原因组出现，不能相加当作待验证节点总数。非阻碍性融合提示不计入关键 UNKNOWN。','',
             '## 4. 重要 Tensor 资源 / Tensor Resource Analysis','',
             '**理论原始载荷，不是实际 BPU/DDR/SRAM 或峰值内存。Hypothetical INT8 raw-payload scenario 仅是假设元素数×1 B。**','',
@@ -85,7 +86,9 @@ def markdown(data, violation_limit=50, representative_limit=10):
     lines += ['',f"资源未知 {len(unknown)} 个；按原因 {safe(dict(reasons))}；仅已知集合的 Top10，不保证全图最大。",
               f"中间已知载荷之和 {resource_summary['intermediate_activations']['known_bytes_sum']} B（{resource_summary['intermediate_activations']['completeness']}）；多消费者中间 Tensor {resource_summary['multi_consumer_intermediate_count']} 个。",
               '1 MiB=1,048,576 B；1 MB=1,000,000 B。载荷之和不是峰值，fanout 不代表额外分配。','',
-              '## 5. Graph Optimization Candidates','']
+              ]
+    lines += attention_sections(data, representative_limit)
+    lines+=['','## 5. Graph Optimization Candidates','']
     candidates=data['optimization_candidates']['candidates'];cs=data['optimization_candidates']['summary']
     lines+=[f"候选/观察 {cs['candidate_count']}；按模式 {safe(cs['counts_by_pattern'])}；按分类 {safe(cs['counts_by_classification'])}。",
             'SEMANTICALLY_REDUNDANT 为局部语义冗余；REVIEW_REQUIRED 需接口/分支/融合审查；INSUFFICIENT_INFORMATION 未证明冗余。没有改写模型。']
@@ -105,8 +108,8 @@ def markdown(data, violation_limit=50, representative_limit=10):
                 if key in shown:continue
                 shown.add(key)
                 lines.append(f"- {diagnostic['node_id']} / {r['rule_id']} / {r['status']}：{safe(r['reason'])}。"+
-                             ('导出层先核对维度/轴/常量形状；若修改模型定义/forward 的计算结构，需要评估重训或微调。' if r['status']=='FAIL' else '先补字段或验证转换条件；缺乏结构修改依据。')+
-                             '在训练/导出工程实施，重新导出 → checker → analyze → 接口/数值及任务指标复验；不修补原 ONNX。')
+                             ('可选架构方向：审查算子排列、导出表达或输出头与后处理的分离；没有原工程时不提供代码位置或补丁。' if r['status']=='FAIL' else '先补字段或验证转换条件；缺乏结构修改依据。')+
+                             '如需模型变更，在独立训练/导出工程实施并重新导出，对比接口/数值及任务指标；不修补原 ONNX。')
     lines+=['','## 7. 实际使用规则来源、未覆盖与限制','']
     sources={}
     for diagnostic in data['diagnostics']:
@@ -118,6 +121,7 @@ def markdown(data, violation_limit=50, representative_limit=10):
     lines += ['- '+safe(x) for x in rules['exclusions']+data['limitations']+data['unverified_assumptions']]
     lines+=['','## 8. 查询方法和复现元数据','',
             '- 完整证据：[analysis.json](analysis.json)；机器路径和模型边界保存在 JSON。',
+            '- `python -m rdkx5_doctor shapes --analysis analysis.json --summary`；`shape --analysis analysis.json --tensor <tensor>`。',
             '- `python -m rdkx5_doctor rules validate`；`rules list --operator Mul`。',
             '- `python -m rdkx5_doctor nodes --analysis analysis.json --status VIOLATION`（或 NEEDS_VERIFICATION）。',
             '- `python -m rdkx5_doctor inspect --analysis analysis.json --node <node_id>`。',
@@ -126,3 +130,44 @@ def markdown(data, violation_limit=50, representative_limit=10):
             '- `python -m rdkx5_doctor candidates --analysis analysis.json`；`candidate --analysis analysis.json --id <candidate_id>`。',
             '- 在训练/导出工程生成新模型后：`analyze --model <new_model.onnx> --out reports/new-run`。', '']
     return '\n'.join(lines)
+
+
+def shape_sections(data,limit):
+    section=data.get('shape_analysis')
+    if not section:return []
+    summary=section['summary']
+    lines=['','### Shape 推断与未知来源','',
+           f"载荷已知 {summary['before_known_tensor_count']} → {summary['after_known_tensor_count']}；未知 {summary['before_unknown_tensor_count']} → {summary['after_unknown_tensor_count']}；新证明 Tensor {summary['newly_proved_tensor_count']} / 轴 {summary['newly_proved_axis_count']}；冲突 {summary['conflict_count']}；预算截断 {summary['budget_exceeded']}。",
+           '符号占位不等于动态外部输入；仅有界元信息证明，无特征图/大权重求值。','']
+    changed=[f for f in section['facts'] if f['payload_became_known']]
+    for f in changed[:min(limit,5)]:
+        proof=next(p for p in section['proofs'] if p['tensor_name']==f['tensor_name'])
+        lines.append(f"- {safe(f['tensor_name'])}：{safe(f['onnx_inferred_shape'])} → {safe(f['final_shape'])}；{proof['producer_node_id']}，证明 {safe(proof['proof_id'])}；前提 {safe(proof['source_tensor_names'])}，{safe(proof['derivation'])}。")
+    if len(changed)>min(limit,5):lines.append(f'其余 {len(changed)-min(limit,5)} 个恢复 Tensor 请用 shape/JSON 查看完整逐轴证明。')
+    groups={}
+    for o in section['unknown_origins']:
+        groups.setdefault(o['reason_code'],[]).append(o)
+    for reason,origins in groups.items():
+        lines.append(f"- 未知 {safe(reason)}：{len(origins)} 个唯一 Tensor，首阻塞样例 {safe([o['first_blocking_sources'] for o in origins[:limit]])}；其余 {max(0,len(origins)-limit)} 个在 JSON。")
+    if not groups:lines.append('本次 Shape 未留未解决轴；不代表部署内存或量化已验证。')
+    for c in section['conflicts'][:limit]:lines.append('- CONFLICT：'+safe(c))
+    lines.append('诊断字段变化均附 proof IDs；原始静态失败证据保存在 shape_analysis.original_static_failures。')
+    return lines
+
+def attention_sections(data,limit):
+    lines=['','### MatMul / Softmax / Resize 专项','']
+    selected=[n for n in data['nodes'] if n['op_type'] in ('MatMul','Softmax','Resize')]
+    ds={d['node_id']:d for d in data['diagnostics']}
+    for n in selected[:limit]:
+        f=n.get('operator_facts',{});d=ds[n['id']]
+        inputs=[{'tensor':t['name'],'shape':t.get('shape')} for t in f.get('input_tensors',[])]
+        lines.append(f"- {n['id']} / {safe(n['original_name'])} / {n['op_type']}：{d['status']}；输入 {safe(inputs)}；属性 {safe(n['attributes'])}。逐规则 actual/expected/X5 来源见 inspect/JSON。")
+        if n['op_type']=='Softmax':lines.append(f"  ONNX 语义 {safe(f.get('onnx_semantics'))}；静态路径 {safe(f.get('static_bpu_path'))}；run_on_bpu 未验证，实际分配 UNKNOWN；不能从原名推断 PyTorch 转换路径。")
+        if n['op_type']=='Resize':lines.append(f"  参数/精确因子 {safe(f.get('resize_parameters'))}；布局证明独立于 rank。")
+    if len(selected)>limit:lines.append(f'其余 {len(selected)-limit} 个专项节点请用 CLI/JSON 查看。')
+    reviews={}
+    for d in data['diagnostics']:
+        for r in d['results']:
+            if r['status']=='UNKNOWN' and not r.get('blocking',True):reviews.setdefault((d['operator'],r['reason_code']),set()).add(d['node_id'])
+    for (op,reason),ids in reviews.items():lines.append(f'- 非阻塞 review {op}/{reason}：{len(ids)} 个唯一节点，样例 {safe(sorted(ids)[:limit])}。组可重叠，不是额外待验证节点。')
+    return lines

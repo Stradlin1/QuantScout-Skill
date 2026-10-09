@@ -7,6 +7,7 @@ from onnx import AttributeProto, TensorProto, helper
 from .graph_ir import GraphIR
 from .dtype_utils import dtype
 from .small_constants import collect_shape_constants
+from .small_numeric_constants import collect_numeric_constants
 
 class ModelError(ValueError):
     pass
@@ -108,6 +109,11 @@ def read_model(path):
     for sparse in inferred.graph.sparse_initializer:
         ensure(sparse.values.name).update(shape=list(sparse.dims), dtype=dtype(sparse.values.data_type),
             is_initializer=True, kind='initializer', storage_kind='sparse')
+    original={v.name:tensor_metadata(v) for v in list(model.graph.input)+list(model.graph.value_info)+list(model.graph.output)}
+    original.update({t.name:(list(t.dims),dtype(t.data_type)) for t in model.graph.initializer})
+    for name,t in tensors.items():
+        t['original_shape'],t['original_dtype']=original.get(name,(None,None))
+        t['onnx_inferred_shape']=t['shape'];t['onnx_inferred_dtype']=t['dtype']
     constants = collect_shape_constants(model)
     for name, value in constants.items():
         ensure(name)['small_constant'] = value
@@ -162,4 +168,4 @@ def read_model(path):
         'operator_counts': dict(Counter((n['domain'] + '::' if n['domain'] else '') + n['op_type'] for n in nodes)),
         'initializer_count': len(model.graph.initializer) + len(model.graph.sparse_initializer), 'missing_external_weights': missing,
         'validation': 'metadata_only' if missing else 'checker_passed'}
-    return GraphIR(meta, nodes, tensors, edges, warnings, constants)
+    return GraphIR(meta, nodes, tensors, edges, warnings, constants, collect_numeric_constants(model))

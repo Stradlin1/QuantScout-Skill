@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rdkx5-onnx-doctor"
-version = "0.3.0"
+version = "0.4.0"
 description = "Read-only ONNX constraints, tensor payloads and graph candidates for RDK X5"
 requires-python = ">=3.10"
 dependencies = ["onnx>=1.16,<2", "networkx>=3.2,<4", "PyYAML>=6,<7", "pydantic>=2.7,<3"]

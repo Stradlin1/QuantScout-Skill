@@ -11,7 +11,7 @@ LIMITATIONS = ['尚未用实际工具链验证：未经过 OpenExplorer/hb_mappe
  '路径只表示数据依赖，不表示下游节点违规。',
  '模型 SHA256 仅覆盖 .onnx 文件；external data 内容不包含在该摘要中。']
 
-def analyze(ir, ruleset, manifest):
+def _analyze(ir, ruleset, manifest):
     diagnostics = []
     node_index = {n['id']:n for n in ir.nodes}
     for node in ir.nodes:
@@ -28,9 +28,10 @@ def analyze(ir, ruleset, manifest):
         members = [d for n,d in zip(ir.nodes,diagnostics) if n['op_type']==operator]
         op = ruleset.by_operator.get(operator)
         coverage.append({'operator':operator,'node_count':len(members),
+             'coverage_counts':{s:sum(d['coverage_type']==s for d in members) for s in ('AUTO_CHECKED','PARTIAL_OR_CONDITIONAL','NOT_COVERED')},
              'status_counts':{s:sum(d['status']==s for d in members) for s in ('NO_VIOLATION_FOUND','VIOLATION','NEEDS_VERIFICATION','NOT_COVERED')},
              'rule_version':op.ruleset_version if op else None,'source_version':op.source_version if op else None})
-    return {'schema_version': '1.2', 'model': ir.model,
+    return {'schema_version': '1.3', 'model': ir.model,
         'ruleset': {'id': ruleset.ruleset_id, 'version': ruleset.ruleset_version,
             'toolchain_version': ruleset.toolchain_version, 'toolchain_verified': False,
             'sources': [s.model_dump() for s in manifest.sources],
@@ -53,3 +54,34 @@ def analyze(ir, ruleset, manifest):
 
 # Keep the public report.markdown entry point while separating rendering policy.
 from .reporting_sections import markdown
+
+
+def analyze(ir, ruleset, manifest):
+    from copy import deepcopy
+    from .static_shape_propagation import refine_shapes
+    baseline=_analyze(deepcopy(ir),ruleset,manifest)
+    shape_analysis=refine_shapes(ir)
+    result=_analyze(ir,ruleset,manifest)
+    result['shape_analysis']=shape_analysis
+    before={d['node_id']:d for d in baseline['diagnostics']}
+    changes=[]
+    for diagnostic in result['diagnostics']:
+        node=next(n for n in ir.nodes if n['id']==diagnostic['node_id'])
+        if any(ir.tensors[name].get('shape_conflict') for name in node['inputs']+node['outputs'] if name):
+            diagnostic['issues'].append('ONNX_SEMANTIC_CONFLICT: shape proof conflicts; original concrete metadata preserved')
+            if diagnostic['status'] not in ('VIOLATION','NOT_COVERED'):diagnostic['status']='NEEDS_VERIFICATION';diagnostic['coverage_type']='PARTIAL_OR_CONDITIONAL'
+        old=before[diagnostic['node_id']]
+        oldvalues=[(r['rule_id'],r['actual'],r['status']) for r in old['results']]
+        newvalues=[(r['rule_id'],r['actual'],r['status']) for r in diagnostic['results']]
+        if oldvalues!=newvalues or old['status']!=diagnostic['status']:
+            inputs=set(node['inputs']+node['outputs'])
+            changes.append(dict(node_id=node['id'],before=old['status'],after=diagnostic['status'],before_rules=oldvalues,after_rules=newvalues,why='proved canonical Tensor metadata refinement',proof_ids=[p['proof_id'] for p in shape_analysis['proofs'] if p['tensor_name'] in inputs]))
+    shape_analysis['diagnostic_changes']=changes
+    shape_analysis['original_static_failures']=[{'node_id':d['node_id'],'results':[r for r in d['results'] if r['status']=='FAIL']} for d in baseline['diagnostics'] if d['status']=='VIOLATION']
+    # Conflict adjustments keep all four-status and coverage totals canonical.
+    ds=result['diagnostics'];result['summary']['all_status_counts']=dict(Counter(d['status'] for d in ds))
+    result['summary']['conv_status_counts']=dict(Counter(d['status'] for d in ds if d['operator']=='Conv'))
+    for row in result['summary']['operator_coverage']:
+        row['coverage_counts']={s:sum(d['coverage_type']==s and d['operator']==row['operator'] for d in ds) for s in ('AUTO_CHECKED','PARTIAL_OR_CONDITIONAL','NOT_COVERED')}
+        row['status_counts']={s:sum(d['status']==s and d['operator']==row['operator'] for d in ds) for s in ('NO_VIOLATION_FOUND','VIOLATION','NEEDS_VERIFICATION','NOT_COVERED')}
+    return result
