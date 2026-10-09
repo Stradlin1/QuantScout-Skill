@@ -1,0 +1,16 @@
+annotated-types==0.8.0
+iniconfig==2.3.1
+ml_dtypes==0.6.0
+networkx==3.7
+numpy==2.5.3
+onnx==1.23.2
+packaging==26.3
+pluggy==1.6.0
+protobuf==7.36.2
+pydantic==2.14.0
+pydantic_core==2.50.0
+Pygments==2.21.0
+pytest==8.4.2
+PyYAML==6.0.3
+typing-inspection==0.4.4
+typing_extensions==4.16.0

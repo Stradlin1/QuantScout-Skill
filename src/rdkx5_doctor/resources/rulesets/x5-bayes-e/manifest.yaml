@@ -1,0 +1,25 @@
+platform: RDK X5
+march: bayes-e
+ruleset_id: x5-bayes-e-onnx-conv2d
+ruleset_version: 0.1.0
+retrieved_at: '2026-10-09'
+toolchain_version: unverified
+review_status: reviewed_with_exclusions
+sources:
+- title: RDK X3/X5 DOC / 模型算子支持列表
+  url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  version: 网页最后更新 2026-08-04；检索快照 2026-10-09
+  section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+- title: X5 芯片用户手册
+  url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  version: 1.1.2
+  section: ONNX / Conv
+- title: X5 Chip User Manual
+  url: https://developer.d-robotics.cc/x5_sdk_doc_v2.0.0/en/toolchain_development/intermediate/supported_op_list.html
+  version: 2.0.0
+  section: ONNX / Conv
+exclusions:
+- Conv→Add shortcut 的 stride 措辞存在版本差异：RDK 为 2，手册为 {1,2}；不自动套用。
+- 通道与 Kernel N/C 限制及量化末端放宽的交互：仅条件提示，不判 FAIL。
+- CPU 支持列中的 auto_pad、对称 pads 及 dtype 条款不作为 BPU 条款。
+- 通用 shape、字节大小、真实内存、CPU/BPU 分配、延迟、量化精度未覆盖。

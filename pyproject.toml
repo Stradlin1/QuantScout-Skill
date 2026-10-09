@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rdkx5-onnx-doctor"
+version = "0.1.0"
+description = "Evidence-based, read-only ONNX Conv2D diagnostics for RDK X5"
+requires-python = ">=3.10"
+dependencies = ["onnx>=1.16,<2", "networkx>=3.2,<4", "PyYAML>=6,<7", "pydantic>=2.7,<3"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9", "build>=1,<2"]
+
+[project.scripts]
+rdkx5-doctor = "rdkx5_doctor.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+rdkx5_doctor = ["resources/rulesets/x5-bayes-e/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

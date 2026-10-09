@@ -1,0 +1,204 @@
+ruleset_id: x5-bayes-e-onnx-conv2d
+ruleset_version: 0.1.0
+model_domain: ''
+operator: Conv
+scope: input_rank_4
+source_document: RDK X3/X5 DOC / 模型算子支持列表
+source_version: 网页最后更新 2026-08-04；检索快照 2026-10-09
+source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+toolchain_version: unverified
+rules:
+- id: X5-CONV2D-KERNEL-H
+  field: kernel_h
+  check_type: range
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 卷积核空间维度超出官方范围
+  min: 1
+  max: 31
+- id: X5-CONV2D-KERNEL-W
+  field: kernel_w
+  check_type: range
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 卷积核空间维度超出官方范围
+  min: 1
+  max: 31
+- id: X5-CONV2D-KERNEL-VOLUME
+  field: kernel_elements_per_group
+  check_type: max_value
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 每组卷积核 C×H×W 超出官方上限
+  max: 32767
+- id: X5-CONV2D-STRIDE-H
+  field: strides_h
+  check_type: range
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 步长超出官方基础范围
+  min: 1
+  max: 256
+- id: X5-CONV2D-DILATION-H
+  field: dilation_h
+  check_type: range
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 膨胀率超出官方范围
+  min: 1
+  max: 16
+- id: X5-CONV2D-STRIDE-W
+  field: strides_w
+  check_type: range
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 步长超出官方基础范围
+  min: 1
+  max: 256
+- id: X5-CONV2D-DILATION-W
+  field: dilation_w
+  check_type: range
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 膨胀率超出官方范围
+  min: 1
+  max: 16
+- id: X5-CONV2D-PAD-TOP
+  field: pads_top
+  check_type: range
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 有效 padding 超出官方 BPU 范围
+  min: 0
+  max: 256
+- id: X5-CONV2D-PAD-LEFT
+  field: pads_left
+  check_type: range
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 有效 padding 超出官方 BPU 范围
+  min: 0
+  max: 256
+- id: X5-CONV2D-PAD-BOTTOM
+  field: pads_bottom
+  check_type: range
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 有效 padding 超出官方 BPU 范围
+  min: 0
+  max: 256
+- id: X5-CONV2D-PAD-RIGHT
+  field: pads_right
+  check_type: range
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 有效 padding 超出官方 BPU 范围
+  min: 0
+  max: 256
+- id: X5-CONV2D-DILATED-STRIDE-H
+  field: strides_h
+  check_type: equals
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 膨胀卷积仅支持 stride=1
+  value: 1
+  when:
+    field: has_dilation
+    op: equals
+    value: true
+- id: X5-CONV2D-DILATED-DIVISIBLE-H
+  field: dilation_h_divisible
+  check_type: equals
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 输入空间维度须能被对应 dilation 整除
+  value: true
+  when:
+    field: has_dilation
+    op: equals
+    value: true
+- id: X5-CONV2D-DILATED-STRIDE-W
+  field: strides_w
+  check_type: equals
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 膨胀卷积仅支持 stride=1
+  value: 1
+  when:
+    field: has_dilation
+    op: equals
+    value: true
+- id: X5-CONV2D-DILATED-DIVISIBLE-W
+  field: dilation_w_divisible
+  check_type: equals
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 输入空间维度须能被对应 dilation 整除
+  value: true
+  when:
+    field: has_dilation
+    op: equals
+    value: true
+- id: X5-CONV2D-DILATED-OUTPUT
+  field: quantized_output_dtype
+  check_type: equals
+  checkability: conditional
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 膨胀卷积仅支持量化后 int8 输出；原 ONNX float32 无法证明实际量化精度
+  value: int8
+  when:
+    field: has_dilation
+    op: equals
+    value: true
+- id: X5-CONV2D-CHANNEL-IN_CHANNELS_PER_GROUP
+  field: in_channels_per_group
+  check_type: max_value
+  checkability: conditional
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 常规通道上限 8192 与末端子图放宽 65536 的适用性需核实；Kernel N 上限与输出通道条文的关系需审查
+  max: 8192
+  when:
+    field: in_channels_per_group
+    op: greater_than
+    value: 8192
+- id: X5-CONV2D-CHANNEL-OUT_CHANNELS_PER_GROUP
+  field: out_channels_per_group
+  check_type: max_value
+  checkability: conditional
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 常规通道上限 8192 与末端子图放宽 65536 的适用性需核实；Kernel N 上限与输出通道条文的关系需审查
+  max: 8192
+  when:
+    field: out_channels_per_group
+    op: greater_than
+    value: 8192
+- id: X5-CONV2D-CHANNEL-OUT_CHANNELS
+  field: out_channels
+  check_type: max_value
+  checkability: conditional
+  source_url: https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list
+  source_section: RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束
+  message: 常规通道上限 8192 与末端子图放宽 65536 的适用性需核实；Kernel N 上限与输出通道条文的关系需审查
+  max: 8192
+  when:
+    field: out_channels
+    op: greater_than
+    value: 8192
