@@ -1,169 +1,212 @@
 # RDK X5 ONNX Doctor
 
-**纯终端、只读**的 ONNX 静态诊断工具（V1.4 Skill 工作流）。根据版本化官方规则定位异常节点，沿 Tensor 依赖追踪到模型输出，提供终端搜索、过滤、节点详情和路径查询；保存 `analysis.json` 与 `report.md`。V1.1 新增输出/中间 Tensor 理论原始载荷统计与五种结构优化候选。
+**AIGC 通识课程个人结课作业 · 面向 RDK X5 的 ONNX 量化前诊断 Skill**
 
-V1 未经过 OpenExplorer/hb_mapper 实测，不能保证 BPU 执行、量化精度或性能。不评分、不改写模型、不执行 Docker/量化。V1.4 保留上述十类及 V1.3 Shape 能力，新增仅 Opset 11 的 Reshape、Split、MaxPool、AveragePool 专属规则。Relu/Transpose 无可审核的专属数值限制，仅保留官方知识解释，不制造自动 PASS。根据用户最新要求，**不生成 graph.html，不包含前端、浏览器交互或 Netron 依赖**。
+这是我为 AIGC 通识课程制作的一个 **AI Skill**。项目来自实际使用 RDK X5 进行模型量化时遇到的一个问题：把 ONNX 交给量化工具链之前，往往需要先弄清楚模型的版本、算子、张量形状以及哪些地方可能不符合硬件约束。
 
-## 安装（Ubuntu / Python ≥3.10）
+我希望把这些重复的排查工作交给 AI：**只要告诉 Codex“帮我检查这个 ONNX”，Skill 就能按步骤调用检测工具，必要时查询地平线官方手册，并用中文解释检查结果。**
 
-```bash
+本项目不是 ONNX 编辑器，也不是一键量化软件。它更像是量化前的“体检助手”：负责发现和解释问题，帮助使用者决定下一步应该核实什么。
+
+- **交互方式：** Windows VS Code + WSL Ubuntu + Codex 插件；全程使用对话与终端，无网页界面。
+- **当前版本：** Skill V1.4；Python 辅助包 `rdkx5-onnx-doctor` 0.5.0。
+- **硬件目标：** RDK X5（Bayes-e）；当前项目工具链配置以 **ONNX Opset 11** 为准。
+- **基本原则：** 只读 ONNX、有据可查、不把静态预检等同于量化或部署成功。
+
+## 一、这个 Skill 能解决什么问题？
+
+### 先认识三个概念
+
+| 名词 | 通俗解释 |
+| --- | --- |
+| **ONNX** | 一种常用的神经网络模型交换格式。模型导出后，里面记录了计算节点、运算关系、参数与输入输出信息。 |
+| **量化** | 把模型中的部分计算和数据表示转换为更适合目标硬件的形式，例如使用 INT8。并非所有模型都能直接转换成功。 |
+| **BPU** | RDK X5 上的神经网络计算加速单元。ONNX 本身合法，并不代表所有算子都满足 X5 BPU 的具体限制。 |
+
+例如，一个卷积层在 ONNX 规范中可能完全合法，但它的卷积核大小、步长或其他条件不一定符合目标 BPU 的限制。过去需要逐项翻查文档，现在可以让 Skill 先做静态检查，再解释依据和不确定的地方。
+
+### 工作原理：AI 负责判断步骤，脚本负责可靠计算
+
+~~~text
+用户用自然语言提出问题
+          ↓
+Codex 读取 SKILL.md，确定本次检查目标
+          ↓
+调用本地 Python 工具读取 ONNX / 检查 Opset / 分析计算图
+          ↓
+对照经过审核的 X5 BPU 规则，定位需要关注的节点
+          ↓
+遇到未覆盖算子 → 按需查询官方资料或离线手册
+          ↓
+AI 整理证据、解释问题，生成中文结论及本地报告
+~~~
+
+**Skill 是整个流程的主控**；Python、YAML 规则库和官方文档是它使用的辅助资源。这样既能利用 AI 理解自然语言、组织调查的能力，又能让具体的数值判断具有可复现的依据。
+
+## 二、目前已经实现的功能
+
+| 功能 | Skill 会做什么 | 为什么有用 |
+| --- | --- | --- |
+| **模型基础体检** | 验证 ONNX 结构、读取输入输出、Opset 和节点信息 | 先区分“模型文件本身有问题”与“目标硬件可能不兼容” |
+| **当前工具链准入检查** | 对照用户提供的 Profile 检查是否为 Opset 11，返回 MATCH / MISMATCH / UNKNOWN | 尽早发现不符合当前项目配置的版本 |
+| **BPU 算子约束检查** | 用审核过的规则检查 Conv、Mul、Add、Pool 等节点的可知条件 | 找到具体节点、实际参数、限制值和出处 |
+| **官方知识查询** | 对未覆盖算子按需查阅 X5 官方手册；官网不可用时可查询有版本记录的离线资料 | 避免仅凭 AI 印象猜测算子是否受支持 |
+| **Shape 与 Tensor 分析** | 查看中间张量形状、未知维度原因和可计算的理论字节数 | 帮助理解模型的数据流和资源规模 |
+| **计算图追踪** | 查看问题节点的上下游依赖与可到达的模型输出 | 知道问题发生在模型哪里、与哪些输出相关 |
+| **结构优化候选** | 识别部分无效变换、可疑重复操作及 Conv-BN 融合审查候选 | 为回到原训练/导出工程调整模型提供线索 |
+| **报告与解释** | 输出 `report.md`、`analysis.json`，必要时另存版本预检与官方查询证据 | 结果可查看、可复核，而不只有一句“能/不能量化” |
+
+目前规则库覆盖 **14 类算子、66 条自动检查或人工复核条目**（包括非阻塞审查项）。这不代表已经检查了 ONNX 中所有算子，也不代表通过规则的节点一定会被实际放到 BPU 上运行。对于 Relu、Transpose 等没有新增专属数值限制的算子，Skill 可以提供文档解释，但不会凭空制造“全部通过”的规则。
+
+官方资料会区分 **X5 ONNX BPU 条款、CPU 条款、编译器转换说明**，并标注本次是否真正联网获取，还是使用已缓存的文档。仓库还保留了一个固定 Git 版本的[官方算子表离线快照](references/offline_manual/README.md)，供网络不可用时查阅。
+
+### 一个简单的诊断例子
+
+仓库里的 `examples/demo.onnx` 是专门准备的演示模型：它的 Conv 使用了高度为 **32** 的卷积核，而现有 X5 Conv2D 规则规定相应范围为 **1～31**。
+
+因此，Skill 能指出：
+
+> ONNX 结构检查可以通过，但某个 Conv 节点的卷积核高度超出了已收录的 X5 BPU 静态约束。需要回到模型设计或导出阶段检查该结构；尚未实际运行量化工具链，不能直接断言编译器最终怎样处理它。
+
+这个例子可以看出：**“ONNX 合法”与“满足目标 BPU 规则”是两件不同的事。**
+
+## 三、安装与使用
+
+### 1. 推荐环境
+
+本项目的主要使用方式是：
+
+**Windows 上运行 VS Code → 通过 WSL 扩展打开 Ubuntu 工作区 → 使用 VS Code 的 Codex 插件调用 Skill。**
+
+需要准备：
+
+- Windows VS Code，能够连接 WSL Ubuntu，并已安装、配置 Codex 插件。
+- WSL Ubuntu 内的 Python **3.10 或更新版本**、Git 和 Python 虚拟环境工具。
+- 一个准备检查的 `.onnx` 文件。**不需要 GPU、RDK X5 开发板、Docker 或已安装的地平线量化工具链**，也可以先完成本项目的静态检查。
+
+以下命令均在 **WSL Ubuntu 终端**执行，不是在 Windows PowerShell 中执行。
+
+### 2. 克隆仓库并安装 Python 辅助工具
+
+~~~bash
+git clone https://github.com/Stradlin1/skillzuoye.git
+cd skillzuoye
+
+python3 --version
 python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev]'
-python -m rdkx5_doctor --help
-python -m rdkx5_doctor rules validate --ruleset ./rulesets/x5-bayes-e
-```
+.venv/bin/python -m pip install -e .
+~~~
 
-也可执行 `rdkx5-doctor`。核心依赖有明确版本范围；本次实测版本在 requirements-dev-tested.txt 中。无需 GPU、设备、Docker 或模型 API 密钥。
+如果提示缺少 `venv`，可在 Ubuntu 中先安装 `python3-venv`；如需运行开发测试，可额外执行 `.venv/bin/python -m pip install -e '.[dev]'`。
 
-## 全流程终端使用
+检查安装结果：
 
-```bash
-# 分析模型：直接显示异常摘要、规则证据、可达输出及代表路径
-python -m rdkx5_doctor analyze --model /path/to/model.onnx --out reports/model
+~~~bash
+.venv/bin/python -m rdkx5_doctor --help
+.venv/bin/python -m rdkx5_doctor rules validate
+~~~
 
-# 列出所有节点，或按状态过滤
-python -m rdkx5_doctor nodes --analysis reports/model/analysis.json
-python -m rdkx5_doctor nodes --analysis reports/model/analysis.json --status VIOLATION
+项目使用的 Codex Skill 位于：
 
-# 按节点 ID、原始名称、算子、Tensor 搜索（忽略大小写）
-python -m rdkx5_doctor nodes --analysis reports/model/analysis.json --search Conv
+~~~text
+.agents/skills/rdk-x5-onnx-doctor/
+├── SKILL.md
+├── references/
+└── scripts/
+~~~
 
-# 节点详情：Tensor/Shape、Conv 参数、逐规则实际值/允许值/官方来源和建议
-python -m rdkx5_doctor inspect --analysis reports/model/analysis.json --node main/node_000000
+**不需要单独创建 Skill 文件**，克隆仓库后它已经在正确的目录中。
 
-# 追踪到输出：直接前后继、路径中的 Tensor、可达输出及其他路径是否省略
-python -m rdkx5_doctor trace --analysis reports/model/analysis.json --node main/node_000000
-```
+### 3. 在 Windows VS Code 中打开 WSL 项目
 
-`--node` 支持内部 ID 或唯一原始名称；原名重复时必须使用内部 ID。`nodes`、`inspect`、`trace` 均支持 `--json`，可接管道。查询使用已保存报告，不重新加载权重。可以追踪任意已解析节点，未覆盖算子的依赖也可查询。
+在 WSL 的仓库根目录运行：
 
-不传 `--ruleset` 时使用安装包内置规则，可脱离仓库目录运行。输出只有 JSON 与 Markdown，无浏览器和静态资源。
+~~~bash
+code .
+~~~
 
-## 先试小型示例
+确认 VS Code 正在使用 **WSL 工作区**，再打开 Codex 插件。Codex 需要能够读取当前仓库并调用 WSL 终端中的 Python 工具。
 
-```bash
-python examples/generate_demo.py
-python -m rdkx5_doctor analyze --model examples/demo.onnx --out reports/demo
-python -m rdkx5_doctor inspect --analysis reports/demo/analysis.json --node oversized_kernel
-python -m rdkx5_doctor trace --analysis reports/demo/analysis.json --node main/node_000000
-pytest -q
-```
+### 4. 用自然语言调用 Skill（推荐）
 
-示例 Conv kernel_h=32，违反已收录规则 [1,31]；分叉后汇合，能到达 prediction 与 auxiliary 两个输出。已生成的小型模型和两份报告在 [examples](examples)。`python examples/regenerate_report.py` 可重建仓库内示例报告。
+首次演示可先生成仓库自带的测试模型：
 
-## V1.1：资源与优化候选（纯终端）
+~~~bash
+.venv/bin/python examples/generate_demo.py
+~~~
 
-```bash
-python examples/generate_v1_1_demo.py
-python -m rdkx5_doctor analyze --model examples/v1_1_demo.onnx --out reports/demo-v1_1
-python -m rdkx5_doctor tensors --analysis reports/demo-v1_1/analysis.json --kind intermediate --sort bytes --limit 10
-python -m rdkx5_doctor tensors --analysis reports/demo-v1_1/analysis.json --kind output --json
-python -m rdkx5_doctor tensor --analysis reports/demo-v1_1/analysis.json --name prediction --json
-python -m rdkx5_doctor tensors --analysis reports/demo-v1_1/analysis.json --unknown --limit 0
-python -m rdkx5_doctor candidates --analysis reports/demo-v1_1/analysis.json
-python -m rdkx5_doctor candidates --analysis reports/demo-v1_1/analysis.json --pattern TRANSPOSE_INVERSE_PAIR --json
-python -m rdkx5_doctor candidate --analysis reports/demo-v1_1/analysis.json --id OPT-0002
-```
+然后在 **VS Code 的 Codex 对话框**输入：
 
-四个新查询均读取保存的 JSON，不再加载模型，均支持 --json。Tensor 列表按 raw B 排序，未知最后；--sort name 按名称排序；--limit 0 表示全部。--kind 可选 all/output/intermediate/input/initializer/constant/unknown，unknown 指未分类类别；`--unknown` 独立过滤任何类别的未知尺寸。
+> 帮我检查 `examples/demo.onnx` 是否适合当前 RDK X5 量化工具链。请使用仓库中的 ONNX Doctor Skill，检查 Opset、BPU 静态约束，解释主要问题，并把报告保存在本地 `reports/`。不要修改模型或执行量化。
 
-资源只使用 shape/dtype 的逻辑载荷。B 是精确整数；1 MiB=1,048,576 B，1 MB=1,000,000 B。静态 scalar/empty shape 支持；符号维度、未知维度、string/packed/sparse/container 类型保留未知及原因。initializer、输出、中间激活分别去重求已知字节和，存在未知成员则 PARTIAL。fanout 只表示消费者数量，不代表额外分配。
+也可以通过 Codex 的 Skill 选择器**显式选择** `rdk-x5-onnx-doctor`，再输入同样的任务。正常使用时不必记住每一条 Python 子命令，Skill 会根据任务选择所需步骤。
 
-**Hypothetical INT8 raw-payload scenario** 是假设元素数乘 1 B，不是实际量化结果。资源统计不代表 BPU/DDR/SRAM 分配或峰值内存，不预测部署可行性、延迟、FPS 或精度。
+检查自己的模型时，把演示路径改为 WSL 可以访问的模型路径，例如：
 
-| 模式 | 认定与限制 |
-|---|---|
-| IDENTITY | 标准域原值转发；公开输出或 fanout 需接口审查 |
-| TRANSPOSE_INVERSE_PAIR | 真实 Tensor 连接，两个 perm 组合为 identity；共享中间分支不能全局删除第一节点 |
-| CAST_SAME_DTYPE | 输入 dtype 与目标 `to` 明确相同且支持 |
-| RESHAPE_NOOP | 有界常量目标，按版本正确解析 0/-1/allowzero，目标逐维等于静态输入；相同元素数不足以证明 |
-| CONV_BN_FUSION_REVIEW | 直接相连且 BN 处于推理模式；参数/通道/精度/分支/接口需审查，不宣称编译器已经或尚未融合 |
+> 用 RDK X5 ONNX Doctor 检查 `/home/你的用户名/models/my_model.onnx`。先确认是否满足我目前 Opset 11 的工具链配置，再说明哪些算子存在明确的静态约束冲突、哪些需要查询官方资料。不要改写 ONNX。
 
-局部无变化分类为 SEMANTICALLY_REDUNDANT；融合/接口/共享分支为 REVIEW_REQUIRED；无法证明的观察为 INSUFFICIENT_INFORMATION。候选含实际内部 ID/Tensor、证据、条件、阻碍、重叠关系与未来验证步骤；没有删除或重写节点。需未来 ONNX checker、输出接口/shape 和 ONNX Runtime 数值对比。候选最后节点的下游输出仅在 candidate 查询时计算。
+还可以提出更具体的问题，例如“这个 Mul 为什么被标记为异常？”、“哪个中间 Tensor 比较大？”、“帮我查 Shape 算子在 X5 官方手册中的处理说明”。
 
-新报告 schema=1.3，nodes/inspect/trace 仍接受 1.0/1.1/1.2；资源和候选查询接受 1.1/1.2/1.3。旧报告无法查询新资源/候选，需重跑 analyze。保持原有 Conv2D 规则不变。版本与字段见 [schema 文档](docs/ANALYSIS_SCHEMA_V1_1.md)，语义与支持范围见 [ONNX 来源](references/optimization_semantics.md)。
+### 5. 不使用 Codex 时，也可以直接通过终端检查
 
-自带第二示例识别五种模式，prediction 原始载荷为 128 B；完整示例在 [examples/v1_1_demo-report](examples/v1_1_demo-report)。历史 V1 demo-report 保留 1.0 格式用于兼容性验证。
+Skill 的底层工具可以独立运行，方便复现检查结果：
 
-## Codex Skill
+~~~bash
+# 对演示 ONNX 做只读分析
+.venv/bin/python -m rdkx5_doctor analyze \
+  --model examples/demo.onnx \
+  --out reports/demo
 
-用 Ubuntu VS Code + Codex 打开该仓库，仓库级入口为 `.agents/skills/rdk-x5-onnx-doctor/SKILL.md`。示例请求：
+# 按当前工具链 Profile 检查 Opset
+.venv/bin/python -m rdkx5_doctor preflight \
+  --analysis reports/demo/analysis.json \
+  --profile .agents/skills/rdk-x5-onnx-doctor/references/toolchain_profile_opset11.yaml \
+  --json
 
-> 使用 rdk-x5-onnx-doctor，分析 examples/demo.onnx 是否适合 RDK X5，通过终端查看异常节点参数和到两个输出的路径。
+# 查看有静态约束冲突的节点
+.venv/bin/python -m rdkx5_doctor nodes \
+  --analysis reports/demo/analysis.json \
+  --status VIOLATION
 
-Skill 调用确定性 Python 工具、读取机器事实，再生成节点绑定的解释与建议。可以继续要求“分析输出 Tensor 大小和大特征图”或“找冗余节点、逆 Transpose、no-op Reshape、量化前优化候选”。Codex 应根据资源/候选证据选择进一步 inspect/trace，而不是粘贴泛化建议。CLI 可独立离线运行。这里是仓库级 Codex Skill，不是 ChatGPT Work 的插件安装包。用户本机 Codex 的自然语言发现流程仍需实际试用。
+# 追踪一个节点与模型输出的关系
+.venv/bin/python -m rdkx5_doctor trace \
+  --analysis reports/demo/analysis.json \
+  --node main/node_000000
+~~~
 
-## 覆盖与状态
+如果官网不可访问，仍可从仓库保留的官方原文快照查询算子条目：
 
-| 状态 | 含义 |
-|---|---|
-| VIOLATION | 至少一条已收录官方约束有确定 FAIL |
-| NO_VIOLATION_FOUND | 已执行规则未发现违规，不是 BPU 兼容保证 |
-| NEEDS_VERIFICATION | 关键元信息未知、不一致或量化条件无法确认 |
-| NOT_COVERED | 没有适用的已注册规则，不能视为通过 |
+~~~bash
+.venv/bin/python references/offline_manual/query.py \
+  --operator Shape --json
+~~~
 
-逐规则返回 PASS / FAIL / UNKNOWN / NOT_APPLICABLE。自动检查 kernel H/W、每组体积、stride、dilation、有效 padding、膨胀 stride/整除条件。实际量化输出 int8、超常规通道条件保留 UNKNOWN。Conv→Add shortcut 措辞有版本差异，不自动套用。CPU 支持列条款不作为 BPU 条款。
+离线查询只是查文档，不代表自动证明该算子在真实模型中由 BPU 执行。
 
-来源与冲突见 [references/official_sources.md](references/official_sources.md)、[references/conv_rule_notes.md](references/conv_rule_notes.md)。规则缓存在 `rulesets/x5-bayes-e`，使用 schema 和白名单解释 YAML，无 eval。更新约束时升级版本并验证边界测试。
+### 6. 结果保存在哪里？
 
-## 限制、错误与开发
+默认在指定的 `reports/<运行目录>/` 下保存 `report.md` 和 `analysis.json`；Skill 进行完整预检时还可能保存 `preflight.json`、`official_lookup.json` 等独立证据。
 
-- 0：分析或查询成功，即使存在违规或搜索无匹配；2：模型/规则/文件/查询失败，错误写到 stderr。
-- 外部权重缺失或路径不安全：仅元信息结构校验并显式警告，不读取模型目录以外的权重。
-- 符号维度不猜测；形状推断失败保留原始图；子图未覆盖时明确说明。
-- SHA256 只覆盖 ONNX protobuf，不覆盖 external data。输出不得覆盖源模型，包括通过软链覆盖。
-- 每个可达输出展示一条 BFS 最短代表路径，有其他路径时标记省略，避免指数枚举。
-- 不覆盖通用 BPU 大小限制、其他算子支持情况、真实 CPU/BPU 分配、DDR、延迟或量化误差。
+`reports/` 默认被 Git 忽略，个人模型与诊断报告不会因为普通提交而自动进入仓库。历史版本、规则来源与实现细节可以进一步阅读：
 
-源码在 `src/rdkx5_doctor`，规则随 wheel 打包。根 rulesets 是指向包内资源的符号链接，避免双份维护。原附件与最新终端要求的优先关系见 [docs/TERMINAL_V1_SPEC.md](docs/TERMINAL_V1_SPEC.md)，执行结果见 [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md)。
+- [Skill 主控文件](.agents/skills/rdk-x5-onnx-doctor/SKILL.md)
+- [V1.4 开发记录](docs/RDK_X5_ONNX_Doctor_V1_4_Development_Log.md)
+- [官方资料来源说明](references/official_sources.md)
+- [多模型回归验收总结](docs/MULTI_MODEL_VALIDATION.md)
 
-```bash
-python -m build
-pytest -q
-```
+### 使用前需要知道的边界
 
-## V1.2 多算子规则与报告
+当前的 **OpSet 11 是本项目用户 Profile 的要求**，不代表所有版本的 RDK X5 工具链只能使用 Opset 11。`MATCH` 只表示版本条件匹配，`MISMATCH` 时仍可进行通用 ONNX 结构分析。
 
-包版本 0.3.0，总规则包 0.2.0：Conv 保留原 0.1.0 的 19 条规则；新增六类共 16 条，共 35 条。规则只执行安全白名单比较或已审查谓词，按标准域、opset、文档版本匹配；“支持 int16”不会排除原始 FP32。Slice/Gemm 的工具链相关条件保守保留 UNKNOWN。
+本 Skill **不执行 hb_mapper、量化校准、模型编译或板端推理**，也不修改 ONNX。因此，它不能保证模型最终成功部署，不能预测真实 FPS、BPU/DDR 内存占用或量化精度。检测结果中的 `UNKNOWN`、`NOT_COVERED` 和“需要人工验证”都是正常而重要的结论，不能当作自动通过。
 
-```bash
-python -m rdkx5_doctor rules list --operator Mul --json
-```
+## 四、接下来准备完善的功能
 
-JSON 记录完整节点/Tensor/逐规则证据，Markdown 优先展示覆盖矩阵、异常和按原因合并的待验证事项；正常节点不重复生成建议。详见 [协议](docs/ANALYSIS_SCHEMA_V1_2.md)、[报告策略](docs/REPORT_POLICY_V1_2.md)、[官方来源](references/x5_multiop_sources.md)。
+以下属于 **后续计划，当前 V1.4 尚未实现**：
 
-普通报告和日志保存在忽略的 `reports/`；历史生成报告仅解除 Git 跟踪，本地保留。结构、算子或导出方式建议必须回到训练/导出工程修改，再导出复检；本项目不修改 ONNX。静态规则通过不代表编译器/BPU 已验证，未知不能视为通过。
+1. **更直观的资源分类：** 将中间特征图、模型权重与 Shape 参数分开统计。对于动态维度，明确说明“数据量尚无法确定”，避免把已知的 32 B Shape 参数误解为模型中最大的特征图。
+2. **更适合初学者的智能诊断摘要：** 不只是列规则和节点，还能把相同原因的问题归纳起来，用更容易理解的语言说明“发现了什么、依据是什么、建议先核实什么”。
+3. **继续完善 Opset 11 的基础算子知识：** 结合实际模型中尚未覆盖的算子，优先补充经过官方核实的规则；不为了增加数量而编造限制。
+4. **优化课程演示与使用体验：** 准备更清晰的真实模型示例、简洁的诊断结果和必要的使用说明，让第一次接触 RDK X5 的同学也能理解这个 Skill 在做什么。
 
-按本次用户要求，开发期间可同步 Markdown 供线上审查；开发结束后的模型检测报告和真实验收摘要仅保存在忽略的 reports/，不纳入 Git。
-
-## V1.3 Shape 与 attention/Resize
-
-包0.4.0、schema1.3、Registry0.3.0；十类算子共49条规则。Conv及六类V1.2子包不变，MatMul4条、Softmax3条、Resize7条。
-
-```bash
-python -m rdkx5_doctor shapes --analysis reports/model/analysis.json --summary
-python -m rdkx5_doctor shapes --analysis reports/model/analysis.json --status PARTIAL --limit 20
-python -m rdkx5_doctor shape --analysis reports/model/analysis.json --tensor '<tensor_name>' --json
-python -m rdkx5_doctor rules list --operator MatMul --json
-```
-
-有界整数值与 Shape 元信息是不同事实。仅计算 Shape 参数依赖链：64元素、4096编码字节、64依赖深度、2048节点、4传播轮、64未知回溯节点。支持固定/部分 Shape、Gather、整数运算、Concat、Squeeze/Unsqueeze、无损整数Cast、Slice及Reshape；外部/可覆盖/超预算值保持未知。经过审查的下游算子使用元信息证明，原始整数维度冲突不覆盖。FP32/FP64 Resize参数使用独立有界解码。
-
-MatMul使用官方非对称广播与维度限制，区分ONNX合法广播。Softmax区分opset11/13语义、静态路径和未验证run_on_bpu。Resize布局需证据，nearest放大条件不套到缩小。缺失形状通常需要调查分析器，不强迫改变模型；任何建议限架构方向，不搜索训练工程或生成源码补丁。
-
-详见 [schema](docs/ANALYSIS_SCHEMA_V1_3.md)、[报告策略](docs/REPORT_POLICY_V1_3.md)、[来源](references/x5_attention_resize_sources.md)、[开发日志](docs/RDK_X5_ONNX_Doctor_V1_3_Development_Log.md)。全部模型验收结果仅在忽略的reports/。
-
-## V1.4 自然语言 Skill 预检
-
-入口为 [.agents/skills/rdk-x5-onnx-doctor/SKILL.md](.agents/skills/rdk-x5-onnx-doctor/SKILL.md)。用一句话请求“检查这个 ONNX 是否适合我当前的 RDK X5 量化工具链”，Codex 根据证据选择 analyze、preflight、节点/Shape 查询及未覆盖算子的官方查证；只问资源或已收录节点时不强制联网。
-
-当前用户 Profile 的唯一真源在 Skill references/toolchain_profile_opset11.yaml；这是用户配置，官方资料范围含 Opset10/11，不能说所有 X5 工具链仅支持11。MATCH 仅表示版本条件，非11为 MISMATCH，缺失/歧义为 UNKNOWN；ONNX 通用解析仍可执行。显式选择其他用户 profile 时传入该文件并记录。
-
-```bash
-python -m rdkx5_doctor preflight --analysis reports/model/analysis.json --profile .agents/skills/rdk-x5-onnx-doctor/references/toolchain_profile_opset11.yaml --json
-```
-
-将结果保存为独立 preflight.json；analysis schema仍为1.3。官方知识记录独立放 official_lookup.json/md，由 Agent 按实际FETCHED/CACHED/FAILED等状态取证，校验器只检查字段/来源契约，既不联网也不证明引文真假。官网结果不改YAML或节点诊断。
-
-包0.5.0，Registry0.4.0，14类/66条（含review）；旧49条保留。Skill按意图自主选择动作，Python命令完全离线。迁移时安装Python包并保留Skill相对引用的仓库references资料；wheel内置规则，preflight显式传用户profile。通用开发记录见 docs/RDK_X5_ONNX_Doctor_V1_4_Development_Log.md；真实模型/网络/E2E明细留忽略的reports，无自动提交。
+长期来看，可以在独立工作流中接入真实量化工具链，比较静态诊断与编译器结果；但这不属于当前的 ONNX 量化前检查 Skill，也**不是已经完成的功能**。
