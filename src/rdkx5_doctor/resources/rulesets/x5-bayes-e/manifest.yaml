@@ -1,7 +1,7 @@
 platform: RDK X5
 march: bayes-e
 ruleset_id: x5-bayes-e-onnx-multiop
-ruleset_version: 0.3.0
+ruleset_version: 0.4.0
 retrieved_at: '2026-10-09'
 toolchain_version: unverified
 review_status: reviewed_with_exclusions
@@ -25,6 +25,10 @@ exclusions:
 - 通用 shape、字节大小、真实内存、CPU/BPU 分配、延迟、量化精度未覆盖。
 - 新增六类来源为 X5 ONNX BPU 栏；一般大小/对齐、实际量化精度、编译器融合不做确定性判断。
 - Concat 非明确 NCHW rank4 的 batch/N 布局未知；Slice 动态参数和 Gemm→Conv 实际转换需验证。
+- V1.4 新包仅审查 Opset 11；Pool 数值条款仅用于 2D rank4 上下文，auto_pad 有效填充未推导；不套用 CPU 列的 5D/存储限制。
+- Relu/Transpose 只登记官方知识，不以无专属限制制造自动 PASS；Split 的 N 维需要独立布局依据。
+- Split 的 split数应可以整除 未明确指输出数还是分块长度；COUNT-DIVISIBILITY 仅非阻塞审查，不按 L % output_count
+  产生 FAIL。
 toolchain_verified: false
 source_policy: X5_ONNX_BPU_COLUMN_ONLY
 operators:
@@ -96,3 +100,31 @@ operators:
     source_version: 1.1.2
     opset_min: 10
     opset_max: 13
+  Reshape:
+    file: reshape.yaml
+    ruleset_id: x5-bayes-e-onnx-reshape
+    version: 0.1.0
+    source_version: 1.1.2
+    opset_min: 11
+    opset_max: 11
+  Split:
+    file: split.yaml
+    ruleset_id: x5-bayes-e-onnx-split
+    version: 0.1.0
+    source_version: 1.1.2
+    opset_min: 11
+    opset_max: 11
+  MaxPool:
+    file: maxpool.yaml
+    ruleset_id: x5-bayes-e-onnx-maxpool
+    version: 0.1.0
+    source_version: 1.1.2
+    opset_min: 11
+    opset_max: 11
+  AveragePool:
+    file: averagepool.yaml
+    ruleset_id: x5-bayes-e-onnx-averagepool
+    version: 0.1.0
+    source_version: 1.1.2
+    opset_min: 11
+    opset_max: 11

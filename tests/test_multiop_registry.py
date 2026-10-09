@@ -83,10 +83,13 @@ def test_registry_cli(registered,capsys):
     assert main(['rules','list','--ruleset',str(registered),'--operator','Sigmoid','--json'])==0
     assert 'X5-SIGMOID-INPUT-RANK' in capsys.readouterr().out
 
-def test_all_ten_registered_and_conv_immutable():
+def test_original_ten_preserved_and_basic_packs_registered():
     registry,_=load_ruleset(DEFAULT_RULESET)
-    assert set(registry.by_operator)=={'Conv','Sigmoid','Concat','Slice','Add','Mul','Gemm','MatMul','Softmax','Resize'}
-    assert len(registry.all_rules)==49
+    old={'Conv','Sigmoid','Concat','Slice','Add','Mul','Gemm','MatMul','Softmax','Resize'}
+    assert old.issubset(registry.by_operator)
+    assert set(registry.by_operator)-old=={'Reshape','Split','MaxPool','AveragePool'}
+    assert sum(len(registry.by_operator[x].rules) for x in old)==49
+    assert len(registry.all_rules)==66
     assert len(registry.rules)==19
     import subprocess
     from pathlib import Path

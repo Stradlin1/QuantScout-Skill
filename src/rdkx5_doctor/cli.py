@@ -13,12 +13,16 @@ DEFAULT_RULESET = Path(__file__).parent / 'resources' / 'rulesets' / 'x5-bayes-e
 STATES = ['VIOLATION', 'NEEDS_VERIFICATION', 'NOT_COVERED', 'NO_VIOLATION_FOUND']
 
 def parser():
-    p = argparse.ArgumentParser(description='RDK X5 ONNX Doctor V1.3：纯终端、只读 Shape 推断与多算子静态诊断')
+    p = argparse.ArgumentParser(description='RDK X5 ONNX Doctor V1.4：Skill 确定性工具、只读静态诊断')
     sub = p.add_subparsers(dest='command', required=True)
     a = sub.add_parser('analyze', help='分析模型，终端摘要 + JSON/Markdown 报告')
     a.add_argument('--model', required=True, type=Path)
     a.add_argument('--ruleset', type=Path, default=DEFAULT_RULESET)
     a.add_argument('--out', type=Path, required=True)
+    gate = sub.add_parser('preflight', help='核对当前用户工具链 Profile，不判定实际编译支持')
+    gate.add_argument('--analysis', required=True, type=Path)
+    gate.add_argument('--profile', required=True, type=Path)
+    gate.add_argument('--json', action='store_true')
     rules = sub.add_parser('rules', help='规则集操作').add_subparsers(dest='rules_command', required=True)
     validate = rules.add_parser('validate')
     validate.add_argument('--ruleset', type=Path, default=DEFAULT_RULESET)
@@ -142,6 +146,11 @@ def display(value):
 def main(argv=None):
     args = parser().parse_args(argv)
     try:
+        if args.command == 'preflight':
+            from .toolchain_profile import load_profile, preflight
+            result = preflight(load_analysis(args.analysis).get('model', {}), load_profile(args.profile))
+            print(json_text(result, ensure_ascii=False, indent=2))
+            return 0
         if args.command in ('shapes','shape'):
             from .shape_queries import run_shape_query
             return run_shape_query(args,load_analysis(args.analysis),display)

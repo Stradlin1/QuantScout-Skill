@@ -1,8 +1,8 @@
 # RDK X5 ONNX Doctor
 
-**纯终端、只读**的 ONNX 静态诊断工具（V1.3）。根据版本化官方规则定位异常节点，沿 Tensor 依赖追踪到模型输出，提供终端搜索、过滤、节点详情和路径查询；保存 `analysis.json` 与 `report.md`。V1.1 新增输出/中间 Tensor 理论原始载荷统计与五种结构优化候选。
+**纯终端、只读**的 ONNX 静态诊断工具（V1.4 Skill 工作流）。根据版本化官方规则定位异常节点，沿 Tensor 依赖追踪到模型输出，提供终端搜索、过滤、节点详情和路径查询；保存 `analysis.json` 与 `report.md`。V1.1 新增输出/中间 Tensor 理论原始载荷统计与五种结构优化候选。
 
-V1 未经过 OpenExplorer/hb_mapper 实测，不能保证 BPU 执行、量化精度或性能。不评分、不改写模型、不执行 Docker/量化。V1.3 检查 Conv、Mul、Sigmoid、Add、Concat、Slice、Gemm、MatMul、Softmax、Resize；其余算子解析展示但不检查。根据用户最新要求，**不生成 graph.html，不包含前端、浏览器交互或 Netron 依赖**。
+V1 未经过 OpenExplorer/hb_mapper 实测，不能保证 BPU 执行、量化精度或性能。不评分、不改写模型、不执行 Docker/量化。V1.4 保留上述十类及 V1.3 Shape 能力，新增仅 Opset 11 的 Reshape、Split、MaxPool、AveragePool 专属规则。Relu/Transpose 无可审核的专属数值限制，仅保留官方知识解释，不制造自动 PASS。根据用户最新要求，**不生成 graph.html，不包含前端、浏览器交互或 Netron 依赖**。
 
 ## 安装（Ubuntu / Python ≥3.10）
 
@@ -153,3 +153,17 @@ python -m rdkx5_doctor rules list --operator MatMul --json
 MatMul使用官方非对称广播与维度限制，区分ONNX合法广播。Softmax区分opset11/13语义、静态路径和未验证run_on_bpu。Resize布局需证据，nearest放大条件不套到缩小。缺失形状通常需要调查分析器，不强迫改变模型；任何建议限架构方向，不搜索训练工程或生成源码补丁。
 
 详见 [schema](docs/ANALYSIS_SCHEMA_V1_3.md)、[报告策略](docs/REPORT_POLICY_V1_3.md)、[来源](references/x5_attention_resize_sources.md)、[开发日志](docs/RDK_X5_ONNX_Doctor_V1_3_Development_Log.md)。全部模型验收结果仅在忽略的reports/。
+
+## V1.4 自然语言 Skill 预检
+
+入口为 [.agents/skills/rdk-x5-onnx-doctor/SKILL.md](.agents/skills/rdk-x5-onnx-doctor/SKILL.md)。用一句话请求“检查这个 ONNX 是否适合我当前的 RDK X5 量化工具链”，Codex 根据证据选择 analyze、preflight、节点/Shape 查询及未覆盖算子的官方查证；只问资源或已收录节点时不强制联网。
+
+当前用户 Profile 的唯一真源在 Skill references/toolchain_profile_opset11.yaml；这是用户配置，官方资料范围含 Opset10/11，不能说所有 X5 工具链仅支持11。MATCH 仅表示版本条件，非11为 MISMATCH，缺失/歧义为 UNKNOWN；ONNX 通用解析仍可执行。显式选择其他用户 profile 时传入该文件并记录。
+
+```bash
+python -m rdkx5_doctor preflight --analysis reports/model/analysis.json --profile .agents/skills/rdk-x5-onnx-doctor/references/toolchain_profile_opset11.yaml --json
+```
+
+将结果保存为独立 preflight.json；analysis schema仍为1.3。官方知识记录独立放 official_lookup.json/md，由 Agent 按实际FETCHED/CACHED/FAILED等状态取证，校验器只检查字段/来源契约，既不联网也不证明引文真假。官网结果不改YAML或节点诊断。
+
+包0.5.0，Registry0.4.0，14类/66条（含review）；旧49条保留。Skill按意图自主选择动作，Python命令完全离线。迁移时安装Python包并保留Skill相对引用的仓库references资料；wheel内置规则，preflight显式传用户profile。通用开发记录见 docs/RDK_X5_ONNX_Doctor_V1_4_Development_Log.md；真实模型/网络/E2E明细留忽略的reports，无自动提交。

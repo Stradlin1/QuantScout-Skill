@@ -90,7 +90,7 @@ class RuleSet(Strict):
     ruleset_id: str
     ruleset_version: str
     model_domain: str
-    operator: Literal['Conv', 'Sigmoid', 'Concat', 'Slice', 'Add', 'Mul', 'Gemm', 'MatMul', 'Softmax', 'Resize']
+    operator: Literal['Conv', 'Sigmoid', 'Concat', 'Slice', 'Add', 'Mul', 'Gemm', 'MatMul', 'Softmax', 'Resize', 'Reshape', 'Split', 'MaxPool', 'AveragePool']
     scope: Literal['input_rank_4', 'standard_onnx']
     source_document: str
     source_version: str
@@ -254,7 +254,7 @@ def load_ruleset(directory):
                 by_operator[operator] = op
             if 'Conv' not in by_operator:
                 raise ValueError('必须保留 Conv 注册')
-            if manifest.ruleset_version not in ('0.2.0','0.3.0'):
+            if manifest.ruleset_version not in ('0.2.0','0.3.0','0.4.0'):
                 raise ValueError('多算子 Registry 总版本不匹配')
     except Exception as exc:
         raise ValueError(f'规则集校验失败（{directory}）：{exc}') from exc

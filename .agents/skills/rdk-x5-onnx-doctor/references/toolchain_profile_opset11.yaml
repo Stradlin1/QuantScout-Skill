@@ -1,0 +1,9 @@
+profile_id: rdk-x5-current-opset11
+chip: RDK X5
+march: bayes-e
+onnx_default_domain_required_opset: 11
+opset_policy: exact_match_for_current_user_toolchain
+profile_origin: user_provided_project_constraint
+toolchain_version: unverified
+compiler_checked: false
+onnx_generic_analysis_on_mismatch: true

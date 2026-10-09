@@ -34,7 +34,7 @@ def test_extended_schema_unchanged_v1_diagnostics(report):
     for c in data['optimization_candidates']['candidates']:
         assert c['candidate_id'] in md
     assert 'INSUFFICIENT_INFORMATION' in md
-    assert data['ruleset']['version']=='0.3.0'
+    assert data['ruleset']['version']=='0.4.0'
     assert load_ruleset(DEFAULT_RULESET)[0].by_operator['Conv'].ruleset_version==baseline['ruleset']['version']
 
 

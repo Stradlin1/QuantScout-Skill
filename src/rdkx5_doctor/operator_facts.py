@@ -2,6 +2,7 @@
 import onnx
 
 VERIFIED_SCHEMAS = {
+    'Reshape': {5}, 'Split': {11}, 'MaxPool': {11}, 'AveragePool': {11},
     'MatMul': {9,13}, 'Softmax': {1,11,13}, 'Resize': {10,11,13},
     'Sigmoid': {6, 13}, 'Concat': {4, 11, 13}, 'Slice': {10, 11, 13},
     'Add': {7, 13, 14}, 'Mul': {7, 13, 14}, 'Gemm': {7, 9, 11, 13},
@@ -67,4 +68,7 @@ def extract_operator(ir, node, node_index=None):
     elif node['op_type']=='Resize':
         from .resize_op_extractor import extract_resize
         extract_resize(ir,node,facts)
+    elif node['op_type'] in ('Reshape','Split','MaxPool','AveragePool'):
+        from .basic_op_extractor import extract_basic
+        extract_basic(ir,node,facts)
     return facts

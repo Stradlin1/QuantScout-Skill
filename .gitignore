@@ -19,3 +19,6 @@ reports/
 htmlcov/
 *.data
 *.onnx_data
+
+# Windows download metadata; preserve local files, exclude from commits
+*:Zone.Identifier

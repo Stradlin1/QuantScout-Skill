@@ -1,0 +1,64 @@
+ruleset_id: x5-bayes-e-onnx-maxpool
+ruleset_version: 0.1.0
+model_domain: ''
+operator: MaxPool
+scope: standard_onnx
+source_document: X5 芯片用户手册
+source_version: 1.1.2
+source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+toolchain_version: unverified
+opset_min: 11
+opset_max: 11
+rules:
+- id: X5-MAXPOOL-KERNEL
+  field: pool_kernel_max
+  check_type: max_value
+  operator: MaxPool
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / MaxPool / X5 BPU 支持约束
+  reason_code: MAXPOOL_KERNEL
+  checkability: auto_check
+  message: 违反已审查的 X5 ONNX BPU 专属条款
+  max: 256
+- id: X5-MAXPOOL-STRIDE
+  field: pool_stride_max
+  check_type: max_value
+  operator: MaxPool
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / MaxPool / X5 BPU 支持约束
+  reason_code: MAXPOOL_STRIDE
+  checkability: auto_check
+  message: 违反已审查的 X5 ONNX BPU 专属条款
+  max: 256
+- id: X5-MAXPOOL-PADDING
+  field: pool_padding_max
+  check_type: max_value
+  operator: MaxPool
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / MaxPool / X5 BPU 支持约束
+  reason_code: MAXPOOL_PADDING
+  checkability: auto_check
+  message: 违反已审查的 X5 ONNX BPU 专属条款
+  max: 256
+- id: X5-MAXPOOL-NO-DILATION
+  field: pool_no_dilation
+  check_type: equals
+  operator: MaxPool
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / MaxPool / X5 BPU 支持约束
+  reason_code: MAXPOOL_NO_DILATION
+  checkability: auto_check
+  message: 违反已审查的 X5 ONNX BPU 专属条款
+  value: true

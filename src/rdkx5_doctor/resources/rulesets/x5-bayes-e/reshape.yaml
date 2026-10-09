@@ -1,0 +1,54 @@
+ruleset_id: x5-bayes-e-onnx-reshape
+ruleset_version: 0.1.0
+model_domain: ''
+operator: Reshape
+scope: standard_onnx
+source_document: X5 芯片用户手册
+source_version: 1.1.2
+source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+toolchain_version: unverified
+opset_min: 11
+opset_max: 11
+rules:
+- id: X5-RESHAPE-INPUT-RANK
+  field: input_rank
+  check_type: range
+  operator: Reshape
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / Reshape / X5 BPU 支持约束
+  reason_code: RESHAPE_INPUT_RANK
+  checkability: auto_check
+  message: 违反已审查的 X5 ONNX BPU 专属条款
+  min: 1
+  max: 10
+- id: X5-RESHAPE-OUTPUT-RANK
+  field: output_rank
+  check_type: range
+  operator: Reshape
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / Reshape / X5 BPU 支持约束
+  reason_code: RESHAPE_OUTPUT_RANK
+  checkability: auto_check
+  message: 违反已审查的 X5 ONNX BPU 专属条款
+  min: 1
+  max: 10
+- id: X5-RESHAPE-CONVERSION-REVIEW
+  field: reshape_conversion_verified
+  check_type: equals
+  operator: Reshape
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / Reshape / X5 BPU 支持约束；6.3.3.1 常量折叠/转换说明
+  reason_code: RESHAPE_CONVERSION_REVIEW
+  checkability: review_only
+  message: 转换/常量折叠和实际执行位置未验证
+  value: true
+  blocking: false

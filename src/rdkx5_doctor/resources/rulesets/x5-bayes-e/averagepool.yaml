@@ -1,0 +1,110 @@
+ruleset_id: x5-bayes-e-onnx-averagepool
+ruleset_version: 0.1.0
+model_domain: ''
+operator: AveragePool
+scope: standard_onnx
+source_document: X5 芯片用户手册
+source_version: 1.1.2
+source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+toolchain_version: unverified
+opset_min: 11
+opset_max: 11
+rules:
+- id: X5-AVERAGEPOOL-KERNEL-H
+  field: pool_kernel_h
+  check_type: range
+  operator: AveragePool
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / AveragePool / X5 BPU 支持约束
+  reason_code: AVERAGEPOOL_KERNEL_H
+  checkability: auto_check
+  message: 违反已审查的 X5 ONNX BPU 专属条款
+  min: 1
+  max: 256
+- id: X5-AVERAGEPOOL-KERNEL-W
+  field: pool_kernel_w
+  check_type: range
+  operator: AveragePool
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / AveragePool / X5 BPU 支持约束
+  reason_code: AVERAGEPOOL_KERNEL_W
+  checkability: auto_check
+  message: 违反已审查的 X5 ONNX BPU 专属条款
+  min: 1
+  max: 256
+- id: X5-AVERAGEPOOL-AREA
+  field: pool_kernel_area
+  check_type: range
+  operator: AveragePool
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / AveragePool / X5 BPU 支持约束
+  reason_code: AVERAGEPOOL_AREA
+  checkability: auto_check
+  message: 违反已审查的 X5 ONNX BPU 专属条款
+  min: 2
+  max: 8192
+- id: X5-AVERAGEPOOL-STRIDE-H
+  field: pool_stride_h
+  check_type: range
+  operator: AveragePool
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / AveragePool / X5 BPU 支持约束
+  reason_code: AVERAGEPOOL_STRIDE_H
+  checkability: auto_check
+  message: 违反已审查的 X5 ONNX BPU 专属条款
+  min: 1
+  max: 256
+- id: X5-AVERAGEPOOL-STRIDE-W
+  field: pool_stride_w
+  check_type: range
+  operator: AveragePool
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / AveragePool / X5 BPU 支持约束
+  reason_code: AVERAGEPOOL_STRIDE_W
+  checkability: auto_check
+  message: 违反已审查的 X5 ONNX BPU 专属条款
+  min: 1
+  max: 256
+- id: X5-AVERAGEPOOL-PAD-MIN
+  field: pool_padding_min
+  check_type: range
+  operator: AveragePool
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / AveragePool / X5 BPU 支持约束
+  reason_code: AVERAGEPOOL_PAD_MIN
+  checkability: auto_check
+  message: 违反已审查的 X5 ONNX BPU 专属条款
+  min: 0
+  max: 255
+- id: X5-AVERAGEPOOL-PAD-MAX
+  field: pool_padding_max
+  check_type: range
+  operator: AveragePool
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / AveragePool / X5 BPU 支持约束
+  reason_code: AVERAGEPOOL_PAD_MAX
+  checkability: auto_check
+  message: 违反已审查的 X5 ONNX BPU 专属条款
+  min: 0
+  max: 255

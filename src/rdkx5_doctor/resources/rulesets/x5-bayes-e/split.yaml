@@ -1,0 +1,52 @@
+ruleset_id: x5-bayes-e-onnx-split
+ruleset_version: 0.1.0
+model_domain: ''
+operator: Split
+scope: standard_onnx
+source_document: X5 芯片用户手册
+source_version: 1.1.2
+source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+toolchain_version: unverified
+opset_min: 11
+opset_max: 11
+rules:
+- id: X5-SPLIT-NON-N-AXIS
+  field: split_axis_not_batch
+  check_type: equals
+  operator: Split
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / Split / X5 BPU 支持约束
+  reason_code: SPLIT_NON_N_AXIS
+  checkability: auto_check
+  message: 违反已审查的 X5 ONNX BPU 专属条款
+  value: true
+- id: X5-SPLIT-LENGTH-MULTIPLES
+  field: split_lengths_divide_input
+  check_type: equals
+  operator: Split
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / Split / X5 BPU 支持约束
+  reason_code: SPLIT_LENGTH_MULTIPLES
+  checkability: auto_check
+  message: 违反已审查的 X5 ONNX BPU 专属条款
+  value: true
+- id: X5-SPLIT-COUNT-DIVISIBILITY
+  field: split_count_divides_input
+  check_type: equals
+  operator: Split
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 ONNX / Split / X5 BPU 支持约束
+  reason_code: SPLIT_COUNT_DIVISIBILITY
+  checkability: review_only
+  message: 官方 split数 整除措辞未明确输出数/分块长度；输出数整除仅为观察，需人工/工具链核对
+  value: true
+  blocking: false
