@@ -54,3 +54,41 @@ def test_rank_conflict_is_not_counted_again_each_pass(tmp_path):
     r=refine_shapes(ir)
     assert r['summary']['conflict_count']==1
     assert ir.tensors['y']['shape']==[1,32,8] and ir.tensors['z'].get('shape_conflict')
+
+
+def test_dynamic_reshape_is_unknown_not_semantic_conflict(tmp_path):
+    nodes = [h.make_node('Shape', ['x'], ['s']),
+             h.make_node('Gather', ['s', 'index'], ['batch'], axis=0),
+             h.make_node('Unsqueeze', ['batch'], ['batch_vector'], axes=[0]),
+             h.make_node('Concat', ['batch_vector', 'minus_one'], ['target'], axis=0),
+             h.make_node('Reshape', ['x', 'target'], ['y'])]
+    initializers = [h.make_tensor('index', T.INT64, [], [0]),
+                    h.make_tensor('minus_one', T.INT64, [1], [-1])]
+    model = h.make_model(h.make_graph(nodes, 'dynamic_reshape',
+        [h.make_tensor_value_info('x', T.FLOAT, ['batch', 3])],
+        [h.make_tensor_value_info('y', T.FLOAT, [None, None])], initializers),
+        opset_imports=[h.make_opsetid('', 12)])
+    onnx.checker.check_model(model)
+    path = tmp_path / 'dynamic_reshape.onnx'
+    onnx.save(model, path)
+    result = refine_shapes(read_model(path))
+    fact = next(f for f in result['facts'] if f['tensor_name'] == 'y')
+    assert fact['reason_code'] == 'SYMBOLIC_UPSTREAM_DIM'
+    assert result['conflicts'] == []
+    assert not any(p['tensor_name'] == 'y' for p in result['proofs'])
+
+
+@pytest.mark.parametrize('reason', ['UNSUPPORTED_SHAPE_OPERATOR',
+    'EXTERNAL_DATA_NOT_READ', 'CONSTANT_BUDGET_EXCEEDED',
+    'OVERRIDABLE_INITIALIZER', 'SHAPE_PROPAGATION_BUDGET_EXCEEDED'])
+def test_unavailable_shape_parameter_preserves_reason(reason):
+    from rdkx5_doctor.graph_ir import GraphIR
+    from rdkx5_doctor.static_shape_propagation import transfer
+    from rdkx5_doctor.static_shape_values import TinyValueFact
+    node = dict(id='reshape', op_type='Reshape', domain='',
+                inputs=['x', 'target'], outputs=['y'], attributes={})
+    ir = GraphIR({}, [node], {'x': dict(shape=[2, 3]),
+                             'target': dict(shape=[2])}, [], [])
+    result, actual = transfer(node, ir,
+        {'target': TinyValueFact('target', reason_code=reason)}, 12)
+    assert result is None and actual == reason

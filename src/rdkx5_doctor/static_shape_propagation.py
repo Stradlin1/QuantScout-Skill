@@ -16,6 +16,9 @@ from .shape_provenance import unknown_origins
 TRANSFER={'Conv','Sigmoid','Relu','Tanh','Identity','Add','Sub','Mul','Div','Concat',
           'Split','Transpose','Flatten','MaxPool','AveragePool','Gemm','MatMul','Softmax'}
 
+class _UnavailableShapeParameter(ValueError):
+    """An unproved parameter is not evidence of an ONNX semantic conflict."""
+
 def reshape_shape(source,target,allowzero=False):
     if len(target)>64 or any(type(x)is not int or x < -1 for x in target) or target.count(-1)>1:
         raise ValueError('ONNX_SEMANTIC_CONFLICT')
@@ -41,7 +44,7 @@ def transfer(node,ir,values,opset):
     if node['domain'] not in ('','ai.onnx') or opset not in (10,11,12,13):return None,'UNSUPPORTED_OPERATOR_VERSION'
     def vector(n):
         f=values.get(n)
-        if not f or f.status!='PROVEN' or f.value_shape!=(len(f.values),):raise ValueError(f.reason_code if f and f.reason_code else 'VALUE_NOT_STATIC')
+        if not f or f.status!='PROVEN' or f.value_shape!=(len(f.values),):raise _UnavailableShapeParameter(f.reason_code if f and f.reason_code else 'VALUE_NOT_STATIC')
         return list(f.values)
     try:
         if op=='Slice' and shapes and shapes[0] is not None:
@@ -90,6 +93,8 @@ def transfer(node,ir,values,opset):
             tt=t.type.tensor_type
             result.append([d.dim_value if d.HasField('dim_value') else None for d in tt.shape.dim] if tt.HasField('shape') else None)
         return result,None
+    except _UnavailableShapeParameter as exc:
+        return None,str(exc)
     except (ValueError,IndexError,KeyError,TypeError,StopIteration,onnx.onnx_cpp2py_export.shape_inference.InferenceError) as exc:
         return None,str(exc) if str(exc) in ('VALUE_NOT_STATIC','ONNX_SEMANTIC_CONFLICT') else 'ONNX_SEMANTIC_CONFLICT'
 
