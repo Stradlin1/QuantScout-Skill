@@ -7,3 +7,15 @@ build/
 dist/
 *.onnx
 !examples/*.onnx
+
+# Local generated diagnostics, credentials and tool caches
+reports/
+.env
+.env.*
+!.env.example
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.data
+*.onnx_data

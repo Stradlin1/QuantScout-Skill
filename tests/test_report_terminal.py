@@ -13,7 +13,8 @@ def test_reports_terminal_and_source_immutable(make_model,tmp_path,capsys):
     data=json.loads((out/'analysis.json').read_text())
     assert data['model']['sha256']==before
     assert data['diagnostics'][0]['status']=='VIOLATION'
-    assert all(d['status']=='NOT_COVERED' for d in data['diagnostics'][1:])
+    assert all(d['status']=='NOT_COVERED' for d in data['diagnostics'][1:3])
+    assert all(d['status']=='NO_VIOLATION_FOUND' for d in data['diagnostics'][3:])
     assert len(data['traces'][0]['reachable_outputs'])==2
     report=(out/'report.md').read_text()
     for section in range(1,9):
@@ -60,7 +61,7 @@ def test_search_filter_inspect_trace(make_model,tmp_path,capsys):
     assert main(['trace',*args,'--node','main/node_000001','--json'])==0
     assert json.loads(capsys.readouterr().out)['reachable_outputs']==['sum','joined']
     assert main(['inspect',*args,'--node','main/node_000003'])==0
-    assert 'V1 未检查' in capsys.readouterr().out
+    assert 'X5-ADD-' in capsys.readouterr().out
     assert main(['nodes',*args,'--search','does-not-exist'])==0
     assert '匹配 0' in capsys.readouterr().out
     assert main(['inspect',*args,'--node','same'])==2

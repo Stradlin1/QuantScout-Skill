@@ -24,16 +24,18 @@ def test_extended_schema_unchanged_v1_diagnostics(report):
     path,model,out=report
     data=load_analysis(path)
     baseline=json.loads((Path(__file__).parents[1]/'examples/demo-report/analysis.json').read_text())
-    assert data['schema_version']=='1.1'
+    assert data['schema_version']=='1.2'
     assert set(baseline)<=set(data)
-    assert data['diagnostics'][0]['results']==baseline['diagnostics'][0]['results']
+    for result,old in zip(data['diagnostics'][0]['results'],baseline['diagnostics'][0]['results']):
+        assert {key:result[key] for key in old}==old
     assert not any('graph.html'==p.name for p in out.iterdir())
     md=(out/'report.md').read_text()
     assert 'Tensor Resource Analysis' in md and 'Graph Optimization Candidates' in md
     for c in data['optimization_candidates']['candidates']:
         assert c['candidate_id'] in md
     assert 'INSUFFICIENT_INFORMATION' in md
-    assert data['ruleset']['version']==baseline['ruleset']['version']
+    assert data['ruleset']['version']=='0.2.0'
+    assert load_ruleset(DEFAULT_RULESET)[0].by_operator['Conv'].ruleset_version==baseline['ruleset']['version']
 
 
 def test_all_queries_without_model_loading(report,capsys):

@@ -13,7 +13,7 @@ DEFAULT_RULESET = Path(__file__).parent / 'resources' / 'rulesets' / 'x5-bayes-e
 STATES = ['VIOLATION', 'NEEDS_VERIFICATION', 'NOT_COVERED', 'NO_VIOLATION_FOUND']
 
 def parser():
-    p = argparse.ArgumentParser(description='RDK X5 ONNX Doctor：纯终端、只读 Conv2D 静态分析')
+    p = argparse.ArgumentParser(description='RDK X5 ONNX Doctor V1.2：纯终端、只读多算子静态诊断')
     sub = p.add_subparsers(dest='command', required=True)
     a = sub.add_parser('analyze', help='分析模型，终端摘要 + JSON/Markdown 报告')
     a.add_argument('--model', required=True, type=Path)
@@ -22,6 +22,10 @@ def parser():
     rules = sub.add_parser('rules', help='规则集操作').add_subparsers(dest='rules_command', required=True)
     validate = rules.add_parser('validate')
     validate.add_argument('--ruleset', type=Path, default=DEFAULT_RULESET)
+    listing = rules.add_parser('list', help='列出已注册算子规则与来源')
+    listing.add_argument('--ruleset', type=Path, default=DEFAULT_RULESET)
+    listing.add_argument('--operator')
+    listing.add_argument('--json', action='store_true')
     nodes = sub.add_parser('nodes', help='列出/搜索/过滤分析结果中的节点')
     nodes.add_argument('--analysis', required=True, type=Path)
     nodes.add_argument('--status', choices=STATES)
@@ -38,12 +42,13 @@ def parser():
 def load_analysis(path):
     try:
         data = json.loads(path.read_text(encoding='utf-8'))
-        if data.get('schema_version') not in ('1.0', '1.1'):
+        if data.get('schema_version') not in ('1.0', '1.1', '1.2'):
             raise ValueError('不支持的 analysis schema_version')
         if not all(isinstance(data.get(key), list) for key in ('nodes','tensors','edges','diagnostics','traces')):
             raise ValueError('analysis 缺少节点、Tensor、边或诊断列表')
         node_ids = {n['id'] for n in data['nodes']}
-        if len(node_ids) != len(data['nodes']) or any(d['node_id'] not in node_ids for d in data['diagnostics']):
+        diagnostic_ids=[d['node_id'] for d in data['diagnostics']]
+        if len(node_ids) != len(data['nodes']) or len(diagnostic_ids)!=len(set(diagnostic_ids)) or set(diagnostic_ids)!=node_ids:
             raise ValueError('analysis 节点 ID 不一致')
         return data
     except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
@@ -110,12 +115,16 @@ def queries(args):
         print(json_text(facts,ensure_ascii=False,indent=2))
         return 0
     print(f"节点：{node['id']} / {display(node['original_name'])}\n算子：{display(node['domain'] or '标准 ONNX')} / {display(node['op_type'])}\n状态：{diagnostic['status']}")
-    print('参数：' + json_text(node.get('conv',node['attributes']),ensure_ascii=False,indent=2))
+    print('参数与提取证据：' + json_text(node.get('conv',node.get('operator_facts',node['attributes'])),ensure_ascii=False,indent=2))
     print('Tensor：' + json_text(facts['tensors'],ensure_ascii=False,indent=2))
     for result in diagnostic['results']:
         print(f"[{result['status']}] {result['rule_id']}：{result['field']} = {display(result['actual'])}，允许 {result['expected']}\n  {result['reason']}\n  来源：{result['source_url']} / {result['source_section']}")
+        if 'source' in result:
+            print('  来源版本/字段证据：'+json_text({'source':result['source'],'evidence':result['evidence'],'reason_code':result['reason_code']},ensure_ascii=False))
+        else:
+            print('  历史报告无完整来源版本/字段证据；不猜补，需重跑 analyze 获取 V1.2 证据。')
     if not diagnostic['results']:
-        print('V1 未检查该算子，不代表 BPU 兼容。')
+        print('本次规则未覆盖该算子/版本，不代表 BPU 兼容。')
     for issue in diagnostic['issues']:
         print('元信息问题：' + issue)
     for suggestion in diagnostic['suggestions']:
@@ -137,7 +146,18 @@ def main(argv=None):
             return queries(args)
         if args.command == 'rules':
             rules, _ = load_ruleset(args.ruleset)
-            print(f'规则校验通过：{rules.ruleset_id} {rules.ruleset_version}（{len(rules.rules)} 条）')
+            if args.rules_command == 'list':
+                if args.operator and args.operator not in rules.by_operator:
+                    raise ValueError(f'未注册算子：{args.operator}')
+                rows = [{**r.model_dump(exclude_none=True), 'operator': op.operator,
+                         'operator_rule_version': op.ruleset_version,
+                         'source_version': r.source_version or op.source_version}
+                        for op in rules.by_operator.values() if not args.operator or op.operator == args.operator for r in op.rules]
+                print(json_text(rows, ensure_ascii=False, indent=2))
+                return 0
+            print(f'规则校验通过：{rules.ruleset_id} {rules.ruleset_version}（{len(rules.all_rules)} 条）')
+            for operator, op in rules.by_operator.items():
+                print(f'{operator}: {len(op.rules)} 条；子版本 {op.ruleset_version}；来源 {display(op.source_version)}')
             return 0
         rules, manifest = load_ruleset(args.ruleset)
         ir = read_model(args.model)
@@ -150,13 +170,19 @@ def main(argv=None):
         (out / 'analysis.json').write_text(json_text(data,ensure_ascii=False,indent=2,allow_nan=False),encoding='utf-8')
         (out / 'report.md').write_text(markdown(data),encoding='utf-8')
         print(f"分析完成：{out}\nConv 状态：{data['summary']['conv_status_counts']}")
+        print('算子\t数量\t无违规\t违规\t待验证\t未覆盖')
+        for row in data['summary']['operator_coverage']:
+            states=row['status_counts']
+            print(f"{display(row['operator'])}\t{row['node_count']}\t{states['NO_VIOLATION_FOUND']}\t{states['VIOLATION']}\t{states['NEEDS_VERIFICATION']}\t{states['NOT_COVERED']}")
         names = {n['id']:n['original_name'] for n in data['nodes']}
-        for d in data['diagnostics']:
+        findings=[d for d in data['diagnostics'] if d['status'] in ('VIOLATION','NEEDS_VERIFICATION')]
+        for d in findings[:20]:
             if d['status'] in ('VIOLATION','NEEDS_VERIFICATION'):
                 print(f"{d['status']} {d['node_id']} / {display(names[d['node_id']])}")
                 for r in d['results']:
                     if r['status'] in ('FAIL','UNKNOWN'):
                         print(f"  {r['status']} {r['rule_id']}：{r['field']}={display(r['actual'])}，允许 {r['expected']}；{r['reason']}")
+        if len(findings)>20:print(f'其余 {len(findings)-20} 个异常/待验证节点请用 nodes/inspect 或 JSON 查看。')
         for trace in data['traces']:
             print_trace(trace)
         resources = data['resource_analysis']['summary']

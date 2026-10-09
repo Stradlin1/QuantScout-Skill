@@ -1,0 +1,82 @@
+ruleset_id: x5-bayes-e-onnx-mul
+ruleset_version: 0.2.0
+model_domain: ''
+operator: Mul
+scope: standard_onnx
+source_document: X5 芯片用户手册
+source_version: 1.1.2
+source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+toolchain_version: unverified
+opset_min: 7
+opset_max: 23
+rules:
+- id: X5-MUL-INPUT-RANK-MIN
+  operator: Mul
+  field: min_input_rank
+  check_type: range
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 支持的 ONNX 算子列表 / Mul / X5 BPU 支持约束
+  reason_code: MUL_INPUT_RANK_MIN
+  message: 违反已收录的静态 X5 BPU 条款
+  min: 1
+  max: 10
+- id: X5-MUL-INPUT-RANK-MAX
+  operator: Mul
+  field: max_input_rank
+  check_type: range
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 支持的 ONNX 算子列表 / Mul / X5 BPU 支持约束
+  reason_code: MUL_INPUT_RANK_MAX
+  message: 违反已收录的静态 X5 BPU 条款
+  min: 1
+  max: 10
+- id: X5-MUL-OUTPUT-RANK
+  operator: Mul
+  field: output_rank
+  check_type: range
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 支持的 ONNX 算子列表 / Mul / X5 BPU 支持约束
+  reason_code: MUL_OUTPUT_RANK
+  message: 违反已收录的静态 X5 BPU 条款
+  min: 1
+  max: 10
+- id: X5-MUL-CONSTANT-INPUTS
+  operator: Mul
+  field: constant_count_ok
+  check_type: predicate
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 支持的 ONNX 算子列表 / Mul / X5 BPU 支持约束
+  reason_code: CONSTANT_INPUT_SOURCE_OR_LIMIT
+  message: 违反已收录的静态 X5 BPU 条款
+  predicate: at_most_one_fixed_constant_input
+- id: X5-MUL-BROADCAST-MERGE
+  operator: Mul
+  field: broadcast_mergeable
+  check_type: predicate
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 支持的 ONNX 算子列表 / Mul / X5 BPU 支持约束
+  reason_code: BROADCAST_MERGE_UNPROVEN_OR_DISALLOWED
+  message: 违反已收录的静态 X5 BPU 条款
+  predicate: x5_elementwise_broadcast_mergeable
+capabilities:
+- 官方 int16 能力不表示原始 FP32 必须转换到 int16；实际精度和设备分配未验证。

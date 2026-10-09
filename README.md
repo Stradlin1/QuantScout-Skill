@@ -1,8 +1,8 @@
 # RDK X5 ONNX Doctor
 
-**纯终端、只读**的 ONNX Conv2D 静态诊断工具。根据版本化官方规则定位异常节点，沿 Tensor 依赖追踪到模型输出，提供终端搜索、过滤、节点详情和路径查询；保存 `analysis.json` 与 `report.md`。V1.1 新增输出/中间 Tensor 理论原始载荷统计与五种结构优化候选。
+**纯终端、只读**的 ONNX 静态诊断工具（V1.2）。根据版本化官方规则定位异常节点，沿 Tensor 依赖追踪到模型输出，提供终端搜索、过滤、节点详情和路径查询；保存 `analysis.json` 与 `report.md`。V1.1 新增输出/中间 Tensor 理论原始载荷统计与五种结构优化候选。
 
-V1 未经过 OpenExplorer/hb_mapper 实测，不能保证 BPU 执行、量化精度或性能。不评分、不改写模型、不执行 Docker/量化。其他算子解析展示但不检查。根据用户最新要求，**不生成 graph.html，不包含前端、浏览器交互或 Netron 依赖**。
+V1 未经过 OpenExplorer/hb_mapper 实测，不能保证 BPU 执行、量化精度或性能。不评分、不改写模型、不执行 Docker/量化。V1.2 检查 Conv、Mul、Sigmoid、Add、Concat、Slice、Gemm；其余算子解析展示但不检查。根据用户最新要求，**不生成 graph.html，不包含前端、浏览器交互或 Netron 依赖**。
 
 ## 安装（Ubuntu / Python ≥3.10）
 
@@ -36,7 +36,7 @@ python -m rdkx5_doctor inspect --analysis reports/model/analysis.json --node mai
 python -m rdkx5_doctor trace --analysis reports/model/analysis.json --node main/node_000000
 ```
 
-`--node` 支持内部 ID 或唯一原始名称；原名重复时必须使用内部 ID。`nodes`、`inspect`、`trace` 均支持 `--json`，可接管道。查询使用已保存报告，不重新加载权重。可以追踪任意已解析节点，非 Conv 的依赖可查询，但仍为 NOT_COVERED。
+`--node` 支持内部 ID 或唯一原始名称；原名重复时必须使用内部 ID。`nodes`、`inspect`、`trace` 均支持 `--json`，可接管道。查询使用已保存报告，不重新加载权重。可以追踪任意已解析节点，未覆盖算子的依赖也可查询。
 
 不传 `--ruleset` 时使用安装包内置规则，可脱离仓库目录运行。输出只有 JSON 与 Markdown，无浏览器和静态资源。
 
@@ -82,7 +82,7 @@ python -m rdkx5_doctor candidate --analysis reports/demo-v1_1/analysis.json --id
 
 局部无变化分类为 SEMANTICALLY_REDUNDANT；融合/接口/共享分支为 REVIEW_REQUIRED；无法证明的观察为 INSUFFICIENT_INFORMATION。候选含实际内部 ID/Tensor、证据、条件、阻碍、重叠关系与未来验证步骤；没有删除或重写节点。需未来 ONNX checker、输出接口/shape 和 ONNX Runtime 数值对比。候选最后节点的下游输出仅在 candidate 查询时计算。
 
-新报告 schema=1.1，旧 nodes/inspect/trace 仍接受 1.0。旧报告无法查询新资源/候选，需重跑 analyze。保持原有 Conv2D 规则不变。版本与字段见 [schema 文档](docs/ANALYSIS_SCHEMA_V1_1.md)，语义与支持范围见 [ONNX 来源](references/optimization_semantics.md)。
+新报告 schema=1.2，nodes/inspect/trace 仍接受 1.0/1.1；资源和候选查询接受 1.1/1.2。旧报告无法查询新资源/候选，需重跑 analyze。保持原有 Conv2D 规则不变。版本与字段见 [schema 文档](docs/ANALYSIS_SCHEMA_V1_1.md)，语义与支持范围见 [ONNX 来源](references/optimization_semantics.md)。
 
 自带第二示例识别五种模式，prediction 原始载荷为 128 B；完整示例在 [examples/v1_1_demo-report](examples/v1_1_demo-report)。历史 V1 demo-report 保留 1.0 格式用于兼容性验证。
 
@@ -122,3 +122,17 @@ Skill 调用确定性 Python 工具、读取机器事实，再生成节点绑定
 python -m build
 pytest -q
 ```
+
+## V1.2 多算子规则与报告
+
+包版本 0.3.0，总规则包 0.2.0：Conv 保留原 0.1.0 的 19 条规则；新增六类共 16 条，共 35 条。规则只执行安全白名单比较或已审查谓词，按标准域、opset、文档版本匹配；“支持 int16”不会排除原始 FP32。Slice/Gemm 的工具链相关条件保守保留 UNKNOWN。
+
+```bash
+python -m rdkx5_doctor rules list --operator Mul --json
+```
+
+JSON 记录完整节点/Tensor/逐规则证据，Markdown 优先展示覆盖矩阵、异常和按原因合并的待验证事项；正常节点不重复生成建议。详见 [协议](docs/ANALYSIS_SCHEMA_V1_2.md)、[报告策略](docs/REPORT_POLICY_V1_2.md)、[官方来源](references/x5_multiop_sources.md)。
+
+普通报告和日志保存在忽略的 `reports/`；历史生成报告仅解除 Git 跟踪，本地保留。结构、算子或导出方式建议必须回到训练/导出工程修改，再导出复检；本项目不修改 ONNX。静态规则通过不代表编译器/BPU 已验证，未知不能视为通过。
+
+按本次用户要求，开发期间可同步 Markdown 供线上审查；开发结束后的模型检测报告和真实验收摘要仅保存在忽略的 reports/，不纳入 Git。

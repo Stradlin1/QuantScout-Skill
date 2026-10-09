@@ -40,6 +40,8 @@ def decode_integer_tensor(tensor):
 def collect_shape_constants(model):
     requested = {n.input[1] for n in model.graph.node if n.domain in ('', 'ai.onnx')
                  and n.op_type == 'Reshape' and len(n.input) > 1 and n.input[1]}
+    requested.update(name for n in model.graph.node if n.domain in ('', 'ai.onnx')
+                     and n.op_type == 'Slice' for name in n.input[1:5] if name)
     result = {name: {'status': 'UNKNOWN', 'values': None, 'reason': 'Target is not a supported inline constant'} for name in sorted(requested)}
     inputs = {v.name for v in model.graph.input}
     for init in model.graph.initializer:

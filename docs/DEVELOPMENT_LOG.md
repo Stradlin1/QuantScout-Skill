@@ -110,3 +110,21 @@ CLI V1.1 子集 13 passed：新/旧协议、过滤/排序、未知数、四个 -
 重新真实 analyze 成功（0.922秒，耗时仅本机观测），五种候选模式最终均为0。除 optimization_candidates 外全部 JSON 顶层事实与修复前相同。所有重要节点实际执行 nodes/inspect/trace/tensor；初始9个观察全部执行 candidate 查询。注意力两个 Transpose 间隔 MatMul/Mul/Softmax，不能抵消；11个 Reshape 有实际shape变化证据。候选查询历史不表示最终仍有候选。
 
 模型前后 SHA256 相同：`a8ea6ccf474c77614f33512c4a118390f3b14c28e4871615670888a6ca292de4`。未执行 Docker/hb_mapper/量化、图优化、评分、GUI、数值推理或 git commit/push。工具链分配、真实 BPU/DDR/SRAM、峰值、性能和任务精度仍未验证。V1.2 建议优先有界 shape 算术传播、未知来源诊断，再按官方版本证据扩展 elementwise/Slice/Concat/Resize/MatMul/Softmax/Gemm 等真实算子规则；本次没有编造或新增硬件限制。
+
+## V1.2 — P12–P18（2026-10-09）
+
+本轮按 `RDK_X5_ONNX_Doctor_V1_2_Multi_Op_BPU_Development_Spec.md` 渐进实现。使用项目 .venv、隔离 ROS 的 PYTHONPATH；全程只读模型，不执行 Docker、hb_mapper 或量化，不 commit/push。用户原有规范及 Zone.Identifier 保留。
+
+- P12：读取规范、已有源码/协议/Skill/真实验收基线，执行 `--help`、`rules validate`、`env -u PYTHONPATH .venv/bin/python -m pytest -q` 和旧版真实分析。基线 141 passed；Conv 19 条。在线核对主站 X5 ONNX BPU 栏、手册 1.1.2 与英文 2.0.0，六类条款一致。记录网页和实际工具链版本的区别。
+- P13：引入安全 RuleRegistry、算子字段与谓词白名单、注册顺序及版本/domain/opset 校验；保持原 Conv YAML 字节不变、直接接口兼容。拒绝路径逃逸、软链逃逸、重复 ID/文件/YAML key、未知字段/谓词/额外配置及危险 YAML。阶段 159 passed。
+- P14：依次实现 Sigmoid、Concat、Slice、Add、Mul、Gemm extractor 和 YAML；每类运行定向测试及真实子集检查。定向结果分别 6/7/5/15/38/9 项通过；全量阶段最终 223 passed。Add/Mul 使用独立 NumPy 广播 oracle；固定常量区分 initializer 可覆盖性；Slice 仅有界读取整数参数；Gemm 保留逻辑矩阵参数，不冒充 Conv 布局。早期测试选择器有一次未选中和一次误选尚未接入 Gemm 测试，改用明确 node selectors 后通过；未 skip 测试。旧测试的总规则版本断言迁移到 Registry 0.2.0，保留 Conv 0.1.0。
+- P15：生成 schema 1.2，保留全部旧顶层事实，添加逐规则节点、Tensor、实际值/允许值、文档版本/X5栏证据；每节点恰一诊断，四状态与覆盖数守恒。CLI 保持旧节点/路径/资源/候选查询；历史 1.0/1.1 只读兼容。Concat 增加布局证明：仅 rank4 不足以认定 N 轴，加入回归。阶段 228 passed。
+- P16：报告分为版本/摘要/覆盖/违规/未知/资源/候选/建议/来源，去除正常节点批量建议；违规前50、未知每组10、候选10，提示省略且 JSON 全量保留。增加转义、防注入和截断/守恒测试，新增协议与报告策略文档。阶段 232 passed。
+- P17：增加 reports/、缓存、环境文件及外部模型数据忽略，保留 examples/*.onnx 例外；对 818 个已跟踪历史产物保存 SHA256 清单，`git rm -r --cached --quiet -- reports` 后逐个检查本地文件及 hash 不变。更新 README/AGENTS/Skill 的多算子选择、证据溯源与训练/导出回源原则；增加 Git hygiene 测试。阶段 233 passed。用户随后明确：模型检测报告不上传，开发 Markdown 可在周期内用于线上审查，但开发结束的模型验收 Markdown 不同步；因此覆盖规范中的 tracked docs/validations 模型摘要建议，最终仅保留于忽略的 reports/。
+- P18：独立 ONNX API/checker 验证真实图、原 Conv 逐字段规则结果、Tensor 载荷算术及资源/候选不回归；逐异常及各重要 UNKNOWN 执行 inspect/trace，输出和 Top10 使用 tensors/tensor 查询。完整证据和模型 SHA256 前后记录位于本地独立 reports/ 目录，不进入 Git。临时验收脚本先误用 rule_results/bytes_per_element，改为实际 results/element_size_bytes，重新独立核对成功；未改变诊断条件。
+
+最终审查补充“已知谓词但算子/字段错配”的最小反例及加载阶段拒绝，避免运行时访问不适用字段。清理 MANIFEST.in 对不存在网页/脚本文件的声明；不增加可视化。总规则 35：Conv19、Sigmoid2、Concat1、Slice1、Add6、Mul5、Gemm1。Slice/Gemm 仅 review_only，不伪造硬件 PASS/FAIL；Add shortcut 是非阻塞 review。FP32 与 int16 能力、ONNX 自身合法性与 BPU 限制分别呈现。
+
+打包命令 `.venv/bin/python -m build --no-isolation`（利用已安装构建依赖）成功构建 wheel/sdist。创建 `/tmp/rdkx5-v12-wheel-validation` 新环境，下载依赖后仅从本地 wheelhouse 安装，在 `/tmp` 工作目录执行 --help/rules validate/rules list/真实 analyze；包来源明确为独立环境 site-packages。下载初次被沙箱禁止本地代理连接，按权限流程获批后重试成功；没有绕过限制。完整命令、退出码、stdout/stderr 保留在忽略的 reports/。
+
+P18 最终全量测试：234 passed in 6.32s。最终 wheel/sdist 再构建成功，独立环境重装最终 wheel 后 rules validate 和真实 analyze 均成功，分析 JSON 与源码环境完全一致。git diff --check 通过。模型详细结果按用户要求仅保留本地 reports/REAL_ONNX_V1_2_VALIDATION.md（实际目录为独立带时间戳子目录）；未建立 tracked 模型验收摘要。

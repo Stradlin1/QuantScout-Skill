@@ -1,0 +1,27 @@
+ruleset_id: x5-bayes-e-onnx-concat
+ruleset_version: 0.2.0
+model_domain: ''
+operator: Concat
+scope: standard_onnx
+source_document: X5 芯片用户手册
+source_version: 1.1.2
+source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+toolchain_version: unverified
+opset_min: 4
+opset_max: 23
+rules:
+- id: X5-CONCAT-NON-N-AXIS
+  operator: Concat
+  field: axis_not_batch
+  check_type: equals
+  checkability: auto_check
+  source_url: https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html
+  source_document: X5 芯片用户手册
+  source_version: 1.1.2
+  source_column: X5 BPU 支持约束
+  source_section: 6.3.3.3 X5 支持的 ONNX 算子列表 / Concat / X5 BPU 支持约束
+  reason_code: CONCAT_NON_N_AXIS
+  message: 所引用 X5 BPU 条款不支持 N 轴拼接
+  value: true
+capabilities:
+- 官方 int16 能力不表示原始 FP32 必须转换到 int16；实际精度和设备分配未验证。

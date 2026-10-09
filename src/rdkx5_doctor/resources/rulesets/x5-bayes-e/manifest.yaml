@@ -1,7 +1,7 @@
 platform: RDK X5
 march: bayes-e
-ruleset_id: x5-bayes-e-onnx-conv2d
-ruleset_version: 0.1.0
+ruleset_id: x5-bayes-e-onnx-multiop
+ruleset_version: 0.2.0
 retrieved_at: '2026-10-09'
 toolchain_version: unverified
 review_status: reviewed_with_exclusions
@@ -23,3 +23,55 @@ exclusions:
 - 通道与 Kernel N/C 限制及量化末端放宽的交互：仅条件提示，不判 FAIL。
 - CPU 支持列中的 auto_pad、对称 pads 及 dtype 条款不作为 BPU 条款。
 - 通用 shape、字节大小、真实内存、CPU/BPU 分配、延迟、量化精度未覆盖。
+- 新增六类来源为 X5 ONNX BPU 栏；一般大小/对齐、实际量化精度、编译器融合不做确定性判断。
+- Concat 非明确 NCHW rank4 的 batch/N 布局未知；Slice 动态参数和 Gemm→Conv 实际转换需验证。
+toolchain_verified: false
+source_policy: X5_ONNX_BPU_COLUMN_ONLY
+operators:
+  Conv:
+    file: conv2d.yaml
+    ruleset_id: x5-bayes-e-onnx-conv2d
+    version: 0.1.0
+    source_version: 网页最后更新 2026-08-04；检索快照 2026-10-09
+  Sigmoid:
+    file: sigmoid.yaml
+    ruleset_id: x5-bayes-e-onnx-sigmoid
+    version: 0.2.0
+    source_version: 1.1.2
+    opset_min: 6
+    opset_max: 23
+  Concat:
+    file: concat.yaml
+    ruleset_id: x5-bayes-e-onnx-concat
+    version: 0.2.0
+    source_version: 1.1.2
+    opset_min: 4
+    opset_max: 23
+  Slice:
+    file: slice.yaml
+    ruleset_id: x5-bayes-e-onnx-slice
+    version: 0.2.0
+    source_version: 1.1.2
+    opset_min: 10
+    opset_max: 23
+  Add:
+    file: add.yaml
+    ruleset_id: x5-bayes-e-onnx-add
+    version: 0.2.0
+    source_version: 1.1.2
+    opset_min: 7
+    opset_max: 23
+  Mul:
+    file: mul.yaml
+    ruleset_id: x5-bayes-e-onnx-mul
+    version: 0.2.0
+    source_version: 1.1.2
+    opset_min: 7
+    opset_max: 23
+  Gemm:
+    file: gemm.yaml
+    ruleset_id: x5-bayes-e-onnx-gemm
+    version: 0.2.0
+    source_version: 1.1.2
+    opset_min: 7
+    opset_max: 23
