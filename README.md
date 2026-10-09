@@ -1,4 +1,4 @@
-# RDK X5 ONNX Doctor
+# QuantScout-Skill
 
 **AIGC 通识课程个人结课作业 · 面向 RDK X5 的 ONNX 量化前诊断 Skill**
 
@@ -9,7 +9,7 @@
 本项目**专门面向地平线 RDK X5（Bayes-e）的 ONNX 量化流程**，不是通用的 ONNX 编辑器，也不是一键量化软件。它更像是量化前的“体检助手”：在模型进入地平线量化工具链之前，先发现和解释可能影响转换的静态问题，帮助使用者决定下一步应该核实什么。
 
 - **交互方式：** Windows VS Code + WSL Ubuntu + Codex 插件；全程使用对话与终端，无网页界面。
-- **当前版本：** Skill V1.4；Python 辅助包 `rdkx5-onnx-doctor` 0.5.0。
+- **当前版本：** QuantScout Skill V1.4；Python 辅助包 `rdkx5-onnx-doctor` 0.5.0。
 - **硬件与工具链目标：** 地平线 RDK X5（Bayes-e）；本人使用 **OpenExplorer v1.2.8**，当前项目工具链 Profile 按 **ONNX Opset 11** 检查。
 - **基本原则：** 只读 ONNX、有据可查、不把静态预检等同于量化或部署成功。
 
@@ -107,8 +107,8 @@ AI 整理证据、解释问题，生成中文结论及本地报告
 ### 2. 克隆仓库并安装 Python 辅助工具
 
 ~~~bash
-git clone https://github.com/Stradlin1/skillzuoye.git
-cd skillzuoye
+git clone https://github.com/Stradlin1/QuantScout-Skill.git
+cd QuantScout-Skill
 
 python3 --version
 python3 -m venv .venv
@@ -155,13 +155,13 @@ code .
 
 然后在 **VS Code 的 Codex 对话框**输入：
 
-> 帮我检查 `examples/demo.onnx` 是否适合当前 RDK X5 量化工具链。请使用仓库中的 ONNX Doctor Skill，检查 Opset、BPU 静态约束，解释主要问题，并把报告保存在本地 `reports/`。不要修改模型或执行量化。
+> 帮我检查 `examples/demo.onnx` 是否适合当前 RDK X5 量化工具链。请使用仓库中的 QuantScout Skill，检查 Opset、BPU 静态约束，解释主要问题，并把报告保存在本地 `reports/`。不要修改模型或执行量化。
 
 也可以通过 Codex 的 Skill 选择器**显式选择** `rdk-x5-onnx-doctor`，再输入同样的任务。正常使用时不必记住每一条 Python 子命令，Skill 会根据任务选择所需步骤。
 
 检查自己的模型时，把演示路径改为 WSL 可以访问的模型路径，例如：
 
-> 用 RDK X5 ONNX Doctor 检查 `/home/你的用户名/models/my_model.onnx`。先确认是否满足我目前 Opset 11 的工具链配置，再说明哪些算子存在明确的静态约束冲突、哪些需要查询官方资料。不要改写 ONNX。
+> 用 QuantScout Skill 检查 `/home/你的用户名/models/my_model.onnx`。先确认是否满足我目前 Opset 11 的工具链配置，再说明哪些算子存在明确的静态约束冲突、哪些需要查询官方资料。不要改写 ONNX。
 
 还可以提出更具体的问题，例如“这个 Mul 为什么被标记为异常？”、“哪个中间 Tensor 比较大？”、“帮我查 Shape 算子在 X5 官方手册中的处理说明”。
 
