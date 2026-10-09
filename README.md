@@ -13,6 +13,23 @@
 - **硬件与工具链目标：** 地平线 RDK X5（Bayes-e）；本人使用 **OpenExplorer v1.2.8**，当前项目工具链 Profile 按 **ONNX Opset 11** 检查。
 - **基本原则：** 只读 ONNX、有据可查、不把静态预检等同于量化或部署成功。
 
+
+### 项目名称与内部调用名称
+
+**QuantScout-Skill 是对外展示名称和 GitHub 仓库名，不是 Codex Skill 的内部标识。** 为了兼容现有工作流，本项目保留原有的技术标识与 Python 调用方式：
+
+| 用途 | 实际名称 |
+| --- | --- |
+| 项目展示名称 / GitHub 仓库 | `QuantScout-Skill` |
+| Codex Skill 内部名称（`SKILL.md` 的 `name`） | `rdk-x5-onnx-doctor` |
+| Codex Skill 文件目录 | `.agents/skills/rdk-x5-onnx-doctor/` |
+| Python 安装包名称 | `rdkx5-onnx-doctor` |
+| Python 模块名 | `rdkx5_doctor` |
+| 安装后的命令行入口 | `rdkx5-doctor` |
+
+**使用时请在 Codex Skill 选择器中选择 `rdk-x5-onnx-doctor`，或在对话中明确要求使用此 Skill。** 只修改仓库名或 README 标题，不会自动重命名 `SKILL.md` 元数据、Python 模块或命令行入口。本项目目前未对这些内部名称进行迁移。
+
+
 **我使用的地平线量化工具链：** OpenExplorer v1.2.8，目录/发行包名称为：
 
 ```text
@@ -155,13 +172,13 @@ code .
 
 然后在 **VS Code 的 Codex 对话框**输入：
 
-> 帮我检查 `examples/demo.onnx` 是否适合当前 RDK X5 量化工具链。请使用仓库中的 QuantScout Skill，检查 Opset、BPU 静态约束，解释主要问题，并把报告保存在本地 `reports/`。不要修改模型或执行量化。
+> 帮我检查 `examples/demo.onnx` 是否适合当前 RDK X5 量化工具链。请使用仓库中内部名称为 `rdk-x5-onnx-doctor` 的 Skill（项目名 QuantScout-Skill），检查 Opset、BPU 静态约束，解释主要问题，并把报告保存在本地 `reports/`。不要修改模型或执行量化。
 
 也可以通过 Codex 的 Skill 选择器**显式选择** `rdk-x5-onnx-doctor`，再输入同样的任务。正常使用时不必记住每一条 Python 子命令，Skill 会根据任务选择所需步骤。
 
 检查自己的模型时，把演示路径改为 WSL 可以访问的模型路径，例如：
 
-> 用 QuantScout Skill 检查 `/home/你的用户名/models/my_model.onnx`。先确认是否满足我目前 Opset 11 的工具链配置，再说明哪些算子存在明确的静态约束冲突、哪些需要查询官方资料。不要改写 ONNX。
+> 使用 `rdk-x5-onnx-doctor` Skill（QuantScout-Skill 项目）检查 `/home/你的用户名/models/my_model.onnx`。先确认是否满足我目前 Opset 11 的工具链配置，再说明哪些算子存在明确的静态约束冲突、哪些需要查询官方资料。不要改写 ONNX。
 
 还可以提出更具体的问题，例如“这个 Mul 为什么被标记为异常？”、“哪个中间 Tensor 比较大？”、“帮我查 Shape 算子在 X5 官方手册中的处理说明”。
 
