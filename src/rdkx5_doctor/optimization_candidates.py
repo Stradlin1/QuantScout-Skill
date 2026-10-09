@@ -192,6 +192,18 @@ def detect_optimization_candidates(ir, *, constants=None):
                 reason = reason or constant.get('reason','Target shape is not a known small constant')
             elif constant.get('shape') != [len(constant.get('values',[]))] or constant.get('dtype') != 'int64':
                 reason = reason or 'Reshape target must be a one-dimensional INT64 shape vector'
+            # Unknown dimensions prevent proof of a no-op, but known dimensions
+            # can still disprove it. Positive explicit targets need no 0/-1
+            # resolution, so exclude definite rank/axis changes before requiring
+            # the complete input element count. Never infer symbolic dimensions.
+            target = constant.get('values')
+            input_shape = x.get('shape')
+            if (reason is None and isinstance(input_shape, list)
+                    and isinstance(target, list)
+                    and all(type(v) is int and v > 0 for v in target)
+                    and (len(input_shape) != len(target)
+                         or any(type(a) is int and a != b for a, b in zip(input_shape, target)))):
+                continue
             resolved = None
             if reason is None:
                 resolved, reason = resolve_reshape(x.get('shape'),constant['values'],allowzero=node['attributes'].get('allowzero',0))

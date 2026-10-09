@@ -48,3 +48,5 @@ GraphIR.small_constants 和涉及的 Tensor.small_constant 保留状态、来源
 仅对标准 ONNX 域、导入 opset 1..23 中已审查的 operator schema 使用明确语义；Cast 从 schema 6、Reshape 从 schema 5 起。未审查版本返回信息不足观察，custom-domain 同名算子不套用规则。实际版本通过本机 ONNX schema 查找，与源码 verified schema 集合比对。
 
 Reshape 支持默认零拷贝、单个 -1、schema>=14 的 allowzero；元素数量相等并不代表 no-op，必须 resolved target 与输入逐维完全一致。BN schema<=6 按 is_test、7/9 按实际输出数、14/15 按 training_mode 判断推理；训练模式不作为普通推理融合候选。参数仅核对元信息，不读取或折叠数值。
+
+Reshape 输入含符号维度时仍利用已知反证：若已确认的一维 INT64 目标全部为正整数，而输入 rank 或任一已知轴与目标不同，则排除 no-op，不产生信息不足观察。其余未知轴不猜测；无法证明也无法排除时仍保留 INSUFFICIENT_INFORMATION。此筛选不修改图或 BPU 规则。

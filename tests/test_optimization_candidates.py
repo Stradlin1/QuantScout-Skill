@@ -208,3 +208,19 @@ def test_bn_unknown_channel_and_parameter_dtype_blocker(graph):
     c=candidates(ir,'CONV_BN_FUSION_REVIEW')[0]
     assert any('channel metadata unknown' in s for s in c['blockers'])
     assert any('precision' in s for s in c['blockers'])
+
+
+@pytest.mark.parametrize('shape,target,expected', [
+    (['batch', 6], [1, 2, 3], False),
+    (['batch', 512, 'height', 'width'], [1, 4, 128, 400], False),
+    (['batch', 6], [1, 6], True),
+])
+def test_symbolic_reshape_uses_known_shape_to_exclude_non_noop(graph, shape, target, expected):
+    init = numpy_helper.from_array(np.array(target, np.int64), name='target')
+    ir = graph([h.make_node('Reshape', ['x', 'target'], ['y'])],
+               shape=shape, initializers=[init],
+               outputs=[h.make_tensor_value_info('y', T.FLOAT, target)])
+    cs = candidates(ir, 'RESHAPE_NOOP')
+    assert bool(cs) == expected
+    if expected:
+        assert cs[0]['classification'] == 'INSUFFICIENT_INFORMATION'

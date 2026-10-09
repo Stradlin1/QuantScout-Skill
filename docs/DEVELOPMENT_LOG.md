@@ -91,3 +91,22 @@ CLI V1.1 子集 13 passed：新/旧协议、过滤/排序、未知数、四个 -
 - v1_1_demo.onnx：fe9d960d5264b8167a8e8b20cb309dfd160eb5bf302ed975de024fbda5215cba
 
 未做真实 YOLO/大型权重压力测试、用户本机 Codex Skill 自动发现、ONNX Runtime 数值等价、Docker/hb_mapper/量化/板端验证；未声称性能、实际 BPU/DDR 分配或部署结论。嵌套子图、复杂/压缩 dtype 的载荷、未知形状仍按限制说明处理。候选识别保守限制到已核对的 imported opset ≤23，未来/自定义版本返回信息不足或不套用。按需追踪为规范允许的选项；规格无功能范围偏离。仓库内规格副本仅将 Markdown 行尾硬换行转换为 <br>，便于 git whitespace 校验。
+
+## 真实 YOLO26 ONNX 验收（2026-10-09）
+
+在 main / c10ac2ac7d672716e95c4b8b6e264048b5d6b4ec 的干净工作区实际执行终端验收。模型为用户指定的 yolo26_lane_robot.onnx（104,290,060 B），没有复制权重进仓库或修改源模型。完整本地结果位于 `reports/yolo26_lane_robot-20261009-181829/REAL_ONNX_VALIDATION.md`；reports 按已有策略忽略，含最终 analysis.json/report.md、before_fix 快照、命令日志及独立审计。
+
+环境为 Ubuntu 22.04.5 / WSL2、Python 3.10.12、ONNX 1.23.2、NumPy 2.2.6、NetworkX 3.4.2、Pydantic 2.14.0、PyYAML 6.0.3、pytest 8.4.2。初始没有 .venv，系统 ensurepip 缺失，sudo 安装需要密码；通过官方 get-pip 引导仅安装项目环境，再完成 editable dev 安装。首次 pytest 因 ROS PYTHONPATH 引入 launch_testing、缺 lark 在收集前失败；清除外部 PYTHONPATH 后完整运行，未跳过项目测试。
+
+- CLI --help 和原 19 条规则校验成功；隔离环境基线 **138 passed in 0.96s**。
+- 真实模型 opset 11，281 节点、23 种算子、1 输入和 2 输出；原始节点/名称/接口/连边逐项对照一致，checker 成功，无 shape inference 异常、自定义节点或外部权重。
+- 47 个 Conv2D 全为 NO_VIOLATION_FOUND；517 PASS、376 NOT_APPLICABLE、0 FAIL/UNKNOWN。234 个非 Conv 节点 / 22 种算子 NOT_COVERED，没有完整 BPU 兼容结论。
+- images 为 float32 [1,3,640,640]；cls_logits 为 [1,161,56,4] / 144,256 B，offset 为 [1,1,56,4] / 896 B。
+- 共 403 条 Tensor，231 个大小已知、172 个符号 shape 未知。首层最大已知中间项 [1,32,320,320] 为 13,107,200 B = 12.5 MiB。已知中间载荷之和 93,475,488 B（PARTIAL），不是峰值或部署内存。71 个多消费者中间项。
+- 首个未知 shape 起于 Shape/Gather/Add/Div/Mul 计算 Slice 边界的链。原图无中间 value_info；默认推断及只读 data_prop=True 对照均留 172 个符号 shape。记录能力限制，不猜测后续资源。
+
+发现一个候选筛选缺陷：Reshape 输入存在符号轴时，检测器直接返回信息不足，忽略已知 rank/轴已能否定 no-op 的证据。真实模型初始 9 个 INSUFFICIENT_INFORMATION 观察中，8 个 rank2→rank3，另一个已知轴512→4。增加已审查语义、一维INT64正目标下的否定判据；未改 BPU YAML、未猜符号维度、未重写模型。新增3个 tiny fixture 回归：修复前 **2 failed / 1 passed**；修复后 **3 passed**；完整回归 **141 passed in 0.93s**，保留原138项。
+
+重新真实 analyze 成功（0.922秒，耗时仅本机观测），五种候选模式最终均为0。除 optimization_candidates 外全部 JSON 顶层事实与修复前相同。所有重要节点实际执行 nodes/inspect/trace/tensor；初始9个观察全部执行 candidate 查询。注意力两个 Transpose 间隔 MatMul/Mul/Softmax，不能抵消；11个 Reshape 有实际shape变化证据。候选查询历史不表示最终仍有候选。
+
+模型前后 SHA256 相同：`a8ea6ccf474c77614f33512c4a118390f3b14c28e4871615670888a6ca292de4`。未执行 Docker/hb_mapper/量化、图优化、评分、GUI、数值推理或 git commit/push。工具链分配、真实 BPU/DDR/SRAM、峰值、性能和任务精度仍未验证。V1.2 建议优先有界 shape 算术传播、未知来源诊断，再按官方版本证据扩展 elementwise/Slice/Concat/Resize/MatMul/Softmax/Gemm 等真实算子规则；本次没有编造或新增硬件限制。
