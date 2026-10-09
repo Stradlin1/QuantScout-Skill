@@ -1,5 +1,9 @@
 # 官方来源与版本记录
 
+## 官网不可访问时的离线原文
+
+仓库保存了官方开源手册的固定源码快照、Apache-2.0 许可和 SHA256：见 [离线调用说明](offline_manual/README.md)。在根目录运行 `python3 references/offline_manual/query.py --operator Transpose --json` 即可读取 X5 ONNX 表的原始 BPU/CPU 列、行号和使用限制；`--list` 列出 159 个条目。此查询标记 CACHED，不自动判断 BPU 支持，不替换下面经过版本核对的规则依据。源码快照没有 SDK 发布版本号，不能冒充实时网页或 SDK 1.1.2/2.0.0。
+
 检索日期：2026-10-09。目标：RDK X5 / Bayes-e / 标准 ONNX Conv2D。工具链版本 **unverified**；本版不执行工具链，也不把已知其他项目版本当作本项目已验证版本。
 
 | 用途 | 标题 / 版本 | URL | 精确章节 |

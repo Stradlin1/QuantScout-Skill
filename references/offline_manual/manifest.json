@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "title": "D-Robotics 模型算子支持列表：官方源码离线快照",
+  "upstream_repository": "https://github.com/D-Robotics/rdk_doc",
+  "upstream_revision": "2ab42f3c295c1dd1fa94fbf0df24a81442cd642b",
+  "upstream_path": "docs/07_Advanced_development/04_toolchain_development/intermediate/supported_op_list.md",
+  "upstream_url": "https://github.com/D-Robotics/rdk_doc/blob/2ab42f3c295c1dd1fa94fbf0df24a81442cd642b/docs/07_Advanced_development/04_toolchain_development/intermediate/supported_op_list.md",
+  "online_reference_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+  "downloaded_at": "2026-10-09T13:55:30.624312+00:00",
+  "document_version": "unversioned; identified by upstream Git revision",
+  "license": "Apache-2.0",
+  "modifications": "Official Markdown and license copied byte-for-byte; local query and documentation are separate.",
+  "section": "## RDK X5支持的ONNX算子列表",
+  "expected_operator_rows": 159,
+  "files": {
+    "supported_op_list.md": {
+      "sha256": "324d2c8dfbc9d5a3e6bbc67ebad61e3c8d1ba4d9450e610cd691354b2fc94e22",
+      "bytes": 172136
+    },
+    "LICENSE_UPSTREAM": {
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "bytes": 11357
+    }
+  }
+}
