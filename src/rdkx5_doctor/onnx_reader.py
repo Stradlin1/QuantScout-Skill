@@ -5,15 +5,16 @@ import hashlib
 import onnx
 from onnx import AttributeProto, TensorProto, helper
 from .graph_ir import GraphIR
+from .dtype_utils import dtype
+from .small_constants import collect_shape_constants
 
 class ModelError(ValueError):
     pass
 
-def dtype(value):
-    return {TensorProto.FLOAT: 'float32', TensorProto.DOUBLE: 'float64',
-            TensorProto.FLOAT16: 'float16'}.get(value, TensorProto.DataType.Name(value).lower())
-
 def tensor_metadata(value):
+    if not value.type.HasField("tensor_type"):
+        kind = value.type.WhichOneof("value") or "unknown"
+        return None, kind
     t = value.type.tensor_type
     shape = None
     if t.HasField('shape'):
@@ -21,6 +22,12 @@ def tensor_metadata(value):
     return shape, dtype(t.elem_type) if t.elem_type else None
 
 def attribute_metadata(attr):
+    constant_types = {'value_ints': 'int64', 'value_floats': 'float32', 'value_strings': 'string'}
+    if attr.name in constant_types:
+        values = attr.ints if attr.name == 'value_ints' else attr.floats if attr.name == 'value_floats' else attr.strings
+        return {'shape': [len(values)], 'dtype': constant_types[attr.name], 'values_materialized': False}
+    if attr.name == 'value_string':
+        return {'shape': [], 'dtype': 'string', 'values_materialized': False}
     if attr.type == AttributeProto.TENSOR:
         return {'shape': list(attr.t.dims), 'dtype': dtype(attr.t.data_type)}
     if attr.type in (AttributeProto.GRAPH, AttributeProto.GRAPHS):
@@ -28,7 +35,7 @@ def attribute_metadata(attr):
     if attr.type == AttributeProto.TENSORS:
         return [{'shape': list(t.dims), 'dtype': dtype(t.data_type)} for t in attr.tensors]
     if attr.type == AttributeProto.SPARSE_TENSOR:
-        return {'shape': list(attr.sparse_tensor.dims), 'sparse': True}
+        return {'shape': list(attr.sparse_tensor.dims), 'dtype': dtype(attr.sparse_tensor.values.data_type), 'sparse': True}
     val = helper.get_attribute_value(attr)
     if isinstance(val, bytes):
         return val.decode('utf-8', errors='replace')
@@ -98,6 +105,12 @@ def read_model(path):
     for init in inferred.graph.initializer:
         ensure(init.name).update(shape=list(init.dims), dtype=dtype(init.data_type),
                                  is_initializer=True, kind='initializer')
+    for sparse in inferred.graph.sparse_initializer:
+        ensure(sparse.values.name).update(shape=list(sparse.dims), dtype=dtype(sparse.values.data_type),
+            is_initializer=True, kind='initializer', storage_kind='sparse')
+    constants = collect_shape_constants(model)
+    for name, value in constants.items():
+        ensure(name)['small_constant'] = value
     nodes = []
     for i, node in enumerate(inferred.graph.node):
         nid = f'main/node_{i:06d}'
@@ -117,6 +130,14 @@ def read_model(path):
                 if node.op_type == 'Constant' and node.domain in ('', 'ai.onnx'):
                     t['kind'] = 'constant'
                     meta = attrs.get('value', {})
+                    if not meta:
+                        for key in ('value_ints', 'value_floats', 'value_strings', 'value_string'):
+                            if key in attrs:
+                                meta = attrs[key]
+                                break
+                    if 'sparse_value' in attrs:
+                        meta = attrs['sparse_value']
+                        t.update(shape=meta.get('shape'), storage_kind='sparse')
                     if isinstance(meta, dict) and 'shape' in meta:
                         t.update(shape=meta['shape'], dtype=meta['dtype'])
     edges = []
@@ -139,6 +160,6 @@ def read_model(path):
         'inputs': [tensors[x.name] for x in model.graph.input],
         'outputs': [tensors[x.name] for x in model.graph.output], 'node_count': len(nodes),
         'operator_counts': dict(Counter((n['domain'] + '::' if n['domain'] else '') + n['op_type'] for n in nodes)),
-        'initializer_count': len(model.graph.initializer), 'missing_external_weights': missing,
+        'initializer_count': len(model.graph.initializer) + len(model.graph.sparse_initializer), 'missing_external_weights': missing,
         'validation': 'metadata_only' if missing else 'checker_passed'}
-    return GraphIR(meta, nodes, tensors, edges, warnings)
+    return GraphIR(meta, nodes, tensors, edges, warnings, constants)

@@ -5,6 +5,9 @@ import json
 from .conv_extractor import extract_conv
 from .rules import check_node
 from .trace import trace_node
+from .tensor_resource import analyze_tensor_resources
+from .optimization_candidates import analyze_optimization_candidates
+from .text_utils import printable
 
 LIMITATIONS = ['尚未用实际工具链验证：未经过 OpenExplorer/hb_mapper 实测。',
  'V1 仅检查已收录的标准 ONNX Conv2D 规则，其他算子未覆盖。',
@@ -26,7 +29,7 @@ def analyze(ir, ruleset, manifest):
         trace['original_name'] = by_id[trace['node_id']]['original_name']
         trace['evidence'] = [r for r in by_diagnostic[trace['node_id']]['results'] if r['status'] == 'FAIL']
     conv_ids = {n['id'] for n in ir.nodes if n['op_type'] == 'Conv'}
-    return {'schema_version': '1.0', 'model': ir.model,
+    return {'schema_version': '1.1', 'model': ir.model,
         'ruleset': {'id': ruleset.ruleset_id, 'version': ruleset.ruleset_version,
             'toolchain_version': ruleset.toolchain_version, 'toolchain_verified': False,
             'sources': [s.model_dump() for s in manifest.sources],
@@ -37,10 +40,12 @@ def analyze(ir, ruleset, manifest):
         'summary': {'all_status_counts': dict(Counter(d['status'] for d in diagnostics)),
             'conv_status_counts': dict(Counter(d['status'] for d in diagnostics if d['node_id'] in conv_ids)),
             'conv_node_count': len(conv_ids), 'conv2d_checked_count': sum(d.get('scope') == 'conv2d' for d in diagnostics)},
-        'unverified_assumptions': ir.warnings, 'limitations': LIMITATIONS}
+        'unverified_assumptions': ir.warnings, 'limitations': LIMITATIONS,
+        'resource_analysis': analyze_tensor_resources(ir),
+        'optimization_candidates': analyze_optimization_candidates(ir)}
 
 def safe(value):
-    return html.escape(str(value)).replace('|', '&#124;').replace('\n', ' ')
+    return html.escape(printable(value)).replace('|', '&#124;').replace('\n', ' ')
 
 def markdown(data):
     m, r = data['model'], data['ruleset']
@@ -92,4 +97,56 @@ def markdown(data):
     lines += ['', '## 8. 文件索引', '', '- [机器事实 analysis.json](analysis.json)', '- 终端节点列表：`python -m rdkx5_doctor nodes --analysis analysis.json`',
         '- 参数与证据：`python -m rdkx5_doctor inspect --analysis analysis.json --node <节点 ID>`',
         '- 依赖路径：`python -m rdkx5_doctor trace --analysis analysis.json --node <节点 ID>`', '']
+    if 'resource_analysis' in data:
+        lines += resource_markdown(data['resource_analysis'])
+    if 'optimization_candidates' in data:
+        lines += candidates_markdown(data['optimization_candidates'])
     return '\n'.join(lines)
+
+
+def resource_markdown(resources):
+    summary = resources['summary']
+    lines = ['', '## 9. Tensor Resource Analysis', '',
+        '**理论原始 Tensor 载荷，不是实际 BPU/DDR 分配或峰值内存。**',
+        '单位：B；1 MiB = 1,048,576 B；1 MB = 1,000,000 B。bool 假定一个逻辑字节。', '',
+        '| 类别 | Tensor 数 | 已知 B 之和 | 未知数 | 完整性 |', '|---|---|---|---|---|']
+    for key in ('model_outputs','intermediate_activations','initializers','model_inputs','constants','other_unknown'):
+        aggregate = summary[key]
+        lines.append(f"| {key} | {aggregate['tensor_count']} | {aggregate['known_bytes_sum']} | {aggregate['unknown_tensor_count']} | {aggregate['completeness']} |")
+    records = {r['name']:r for r in resources['tensor_records']}
+    for label, key in [('最大已知输出（前 10）','largest_outputs'),('最大已知中间激活（前 10）','largest_intermediates')]:
+        lines += ['', f'### {label}', '', '| Tensor | Shape | dtype | 精确 B | MiB | Consumers | 假设 INT8 B |', '|---|---|---|---|---|---|---|']
+        for name in summary[key]:
+            r = records[name]
+            mib = f"{r['mib']:.2f}" if r['mib'] is not None else 'unknown'
+            lines.append(f"| {safe(name)} | {safe(r['shape'])} | {safe(r['dtype'])} | {r['raw_bytes']} | {mib} | {r['consumer_count']} | {safe(r['hypothetical_int8_bytes'])} |")
+    lines += ['', '**Hypothetical INT8 raw-payload scenario（假设 INT8 原始载荷场景）**：仅元素数乘 1 B，不是实际量化结果或整模型压缩预测。',
+              f"多消费者中间 Tensor：{summary['multi_consumer_intermediate_count']}；fanout 只表示图连接，不代表额外分配。", '', '未知尺寸（最多列 10 个；完整内容查询 tensors）：', '']
+    for name in summary['unknown_tensor_names'][:10]:
+        lines.append(f"- {safe(name)}：{safe(records[name]['unknown_reason'])}")
+    if not summary['unknown_tensor_names']:
+        lines.append('- 无。')
+    lines += ['', '完整资源查询：`python -m rdkx5_doctor tensors --analysis analysis.json --limit 0`。', '']
+    lines += ['- ' + safe(s) for s in summary['limitations']]
+    return lines
+
+
+def candidates_markdown(section):
+    summary = section['summary']
+    lines = ['', '## 10. Graph Optimization Candidates', '', '**没有改写、删除或融合任何模型节点。结构候选不是新增的 X5 BPU 支持规则。**',
+             f"候选/待验证观察共 {summary['candidate_count']}；分类：{safe(summary['counts_by_classification'])}；模式：{safe(summary['counts_by_pattern'])}。", '',
+             'INSUFFICIENT_INFORMATION 是未确认观察，与已建立局部语义冗余明确分开。']
+    for candidate in section['candidates']:
+        lines += ['', f"### {candidate['candidate_id']} / {candidate['pattern']} / {candidate['classification']}", '',
+                  f"节点 ID：{safe(candidate['node_ids'])}；原始名称：{safe(candidate['node_names'])}",
+                  f"Tensor：{safe(candidate['tensor_names'])}", f"识别理由：{safe(candidate['explanation'])}",
+                  f"证据：{safe(candidate['evidence'])}", f"条件：{safe(candidate['conditions'])}",
+                  f"阻碍/需审查：{safe(candidate['blockers'])}", f"重叠候选：{safe(candidate['overlap_with'])}；不能累加收益。",
+                  f"保守结构收益：{safe(candidate['benefit_hint'])}", f"未来验证：{safe(candidate['verification_needed'])}",
+                  '下游输出按需查询：`candidate --analysis analysis.json --id ' + candidate['candidate_id'] + '`；只表示数据依赖。']
+        for url in dict.fromkeys(candidate['source_urls']):
+            lines.append(f'- ONNX 语义来源：{url}')
+    if not section['candidates']:
+        lines += ['', '未发现这五种模式的候选或信息不足观察。']
+    lines += ['', ''] + ['- ' + safe(s) for s in section['limitations']]
+    return lines

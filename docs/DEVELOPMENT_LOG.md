@@ -43,3 +43,51 @@ CPU 列条款没有当作 BPU 限制。shortcut 措辞冲突不自动套用。�
 - 未获得真实 YOLO ONNX，未做真实模型压力测试；大型微型图测试已通过。
 - 其他算子、嵌套子图、通用 BPU 大小限制、实际分配/量化精度/性能未覆盖。
 - 通道例外、shortcut 版本差异和量化后输出精度仍需未来工具链核验。
+
+# V1.1 增量开发记录
+
+## P7 基线（2026-10-09）
+
+分支 main，HEAD 38cb99b；工作树干净，无预先存在的用户修改。Python 3.12.14，依赖沿用 requirements-dev-tested.txt。实际执行 --help、rules validate、pytest -q：19 条 V1 规则校验成功，**47 passed in 0.80s**。这是重新执行得到的基线，非引用历史结果。
+
+兼容契约：新分析输出 schema_version 1.1；所有 V1 顶层键保持。nodes/inspect/trace 接受 1.0 和 1.1。资源/候选查询遇到旧报告缺新增部分时返回 2，并提示重跑 analyze。现有 Conv2D 规则不修改。CLI 成功仍为 0，错误仍为 2。
+
+## P8 Tensor 理论资源
+
+新增 tensor_resource.py；只做元信息整数运算，没有数组分配。分类去重、输出/中间/initializer 分开汇总，标量、零维、符号/未知维、dtype 宽度、稀疏表示、fanout、Top 10、PARTIAL 均保留证据。假设 INT8 与实际量化明确分开。
+
+首次执行 `pytest -q tests/test_tensor_resource.py`：35 passed；后续加巨大整数浮点显示溢出与有效 sparse initializer 的测试，共 37 项。FP32 [1,64,320,320] oracle 为 26,214,400 B=25 MiB，假设 INT8 为 6,553,600 B=6.25 MiB。byte 数不取 NumPy/序列化文件大小。
+
+## P9 五种模式
+
+新增 optimization_candidates.py、small_constants.py、dtype_utils.py。复用 GraphIR，缓存形状小常量；模型权重不二次物化。只读取 Reshape 所需的内联 signed INT32/64，最多 64 元素、4096 编码 B；拒绝 external、超限、错误编码和可覆盖 initializer。
+
+已查 ONNX 官方 operator 页，并使用本机 `onnx.defs.get_schema`核对实际导入版本。Identity/Transpose/Cast/Reshape/推理 BN 的证据和 public output、fanout、未知条件、重叠候选明确记录。Conv-BN 永远为融合审查，BN 参数未读数值。未来版本>23 不默认为已理解语义；custom-domain 不套用。
+
+首次候选测试发现一条测试 oracle 错误：零输入 [-1,0] 在 allowzero=0 时 0 复制非零第二维，-1 可唯一解为零；修正 oracle，并另测真正 0/0 不确定情形。候选初轮 36 passed，增加未知 opset、缺 metadata Identity、可覆盖常量、allowzero、BN dtype/channel 后为 41 项。
+
+## P10 查询、报告与 Skill
+
+新增 resource_queries.py；tensors/tensor/candidates/candidate 均支持 --json；读取保存报告，不加载模型。candidate 只追踪所选候选最后节点，无全候选最短路径开销。补充 dtype/稀疏/容器元信息；Constant 重复值属性只保留元信息，大常量列表不物化。text_utils.py 保护终端 C0/DEL/C1 控制字符及 JSON 的正确转义。
+
+报告保留 V1 八个章节并增加资源与候选，默认只列资源前 10 和未知前 10；完整事实在 JSON。更新已有 Skill，按资源/候选结果选择进一步 inspect/trace。schema 文档说明 1.0/1.1 兼容。
+
+CLI V1.1 子集 13 passed：新/旧协议、过滤/排序、未知数、四个 --json、重名/缺失错误、删除原模型后保存 JSON 查询、终端控制字符、安全只读与可复现事实。原有 V1 47 项未删减；全量执行 **138 passed**（新增 91 项）。
+
+## P11 回归、包装与交付
+
+实际执行 --help、rules validate、`.venv/bin/pytest -q`、`.venv/bin/python -m build`：九个终端子命令正常，19 条原规则通过，**138 passed in 1.11s**，wheel 和 sdist 均成功构建为版本 0.2.0。原有 47 项 + 资源 37 项 + 候选 41 项 + CLI 13 项 = 138；新增 91 项。原 Conv2D YAML、V1 测试和历史 schema 1.0 示例报告保持不变。
+
+在全新临时 venv 安装构建的 wheel，工作目录切到 /tmp，逐项执行 --help、rules validate、analyze、tensors、tensor --json、candidates、candidate --json，全部退出 0。独立安装实际解析 ONNX 1.23.2 / NetworkX 3.7 / Pydantic 2.14.0 / PyYAML 6.0.3，也验证了内置规则随 wheel 安装，无 editable/source 目录依赖；全量单元测试环境仍为 requirements-dev-tested.txt 中的版本。
+
+生成七节点微型模型 examples/v1_1_demo.onnx，并提供 examples/v1_1_demo-report/analysis.json 与 report.md。实际分析：
+- prediction：float32 [1,2,4,4]，32 元素，**128 B**（0.0001220703125 MiB）；假设 INT8 为 32 B，不是实际量化。
+- 中间激活已知理论载荷之和 768 B，完整度 COMPLETE；不是峰值内存。
+- OPT-0002：main/node_000001 to_nhwc → main/node_000002 back_nchw，perm [0,2,3,1] / [0,3,1,2]，复合 [0,1,2,3]，SEMANTICALLY_REDUNDANT。
+- 总计 4 SEMANTICALLY_REDUNDANT、1 REVIEW_REQUIRED；后者为 Conv→推理 BN，参数未读数值，也未执行融合。
+
+对原 examples/demo.onnx 重新 analyze 到 reports/v1_1-original，执行 tensors/candidates/nodes/inspect/trace（oversized_kernel），全部退出 0。两模型分析前后 SHA256 相同：
+- demo.onnx：9f1da4be1ddb5e3b3873daffc4d5734014bf593120e7812d7a4736b316b2b116
+- v1_1_demo.onnx：fe9d960d5264b8167a8e8b20cb309dfd160eb5bf302ed975de024fbda5215cba
+
+未做真实 YOLO/大型权重压力测试、用户本机 Codex Skill 自动发现、ONNX Runtime 数值等价、Docker/hb_mapper/量化/板端验证；未声称性能、实际 BPU/DDR 分配或部署结论。嵌套子图、复杂/压缩 dtype 的载荷、未知形状仍按限制说明处理。候选识别保守限制到已核对的 imported opset ≤23，未来/自定义版本返回信息不足或不套用。按需追踪为规范允许的选项；规格无功能范围偏离。仓库内规格副本仅将 Markdown 行尾硬换行转换为 <br>，便于 git whitespace 校验。

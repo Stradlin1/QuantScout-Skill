@@ -1,0 +1,2153 @@
+{
+  "schema_version": "1.1",
+  "model": {
+    "path": "examples/v1_1_demo.onnx",
+    "sha256": "fe9d960d5264b8167a8e8b20cb309dfd160eb5bf302ed975de024fbda5215cba",
+    "sha256_scope": "ONNX protobuf only; external weight contents excluded",
+    "opset_imports": [
+      {
+        "domain": "",
+        "version": 15
+      }
+    ],
+    "inputs": [
+      {
+        "name": "image",
+        "shape": [
+          1,
+          2,
+          4,
+          4
+        ],
+        "dtype": "float32",
+        "producer": null,
+        "consumers": [
+          "main/node_000000"
+        ],
+        "kind": "graph_input",
+        "is_graph_input": true,
+        "is_graph_output": false,
+        "is_initializer": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "prediction",
+        "shape": [
+          1,
+          2,
+          4,
+          4
+        ],
+        "dtype": "float32",
+        "producer": "main/node_000006",
+        "consumers": [],
+        "kind": "intermediate",
+        "is_graph_input": false,
+        "is_graph_output": true,
+        "is_initializer": false
+      }
+    ],
+    "node_count": 7,
+    "operator_counts": {
+      "Identity": 1,
+      "Transpose": 2,
+      "Cast": 1,
+      "Reshape": 1,
+      "Conv": 1,
+      "BatchNormalization": 1
+    },
+    "initializer_count": 6,
+    "missing_external_weights": [],
+    "validation": "checker_passed"
+  },
+  "ruleset": {
+    "id": "x5-bayes-e-onnx-conv2d",
+    "version": "0.1.0",
+    "toolchain_version": "unverified",
+    "toolchain_verified": false,
+    "sources": [
+      {
+        "title": "RDK X3/X5 DOC / 模型算子支持列表",
+        "url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "version": "网页最后更新 2026-08-04；检索快照 2026-10-09",
+        "section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束"
+      },
+      {
+        "title": "X5 芯片用户手册",
+        "url": "https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html",
+        "version": "1.1.2",
+        "section": "ONNX / Conv"
+      },
+      {
+        "title": "X5 Chip User Manual",
+        "url": "https://developer.d-robotics.cc/x5_sdk_doc_v2.0.0/en/toolchain_development/intermediate/supported_op_list.html",
+        "version": "2.0.0",
+        "section": "ONNX / Conv"
+      }
+    ],
+    "rules": [
+      {
+        "id": "X5-CONV2D-KERNEL-H",
+        "check_type": "range",
+        "field": "kernel_h",
+        "min": 1,
+        "max": 31,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "卷积核空间维度超出官方范围"
+      },
+      {
+        "id": "X5-CONV2D-KERNEL-W",
+        "check_type": "range",
+        "field": "kernel_w",
+        "min": 1,
+        "max": 31,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "卷积核空间维度超出官方范围"
+      },
+      {
+        "id": "X5-CONV2D-KERNEL-VOLUME",
+        "check_type": "max_value",
+        "field": "kernel_elements_per_group",
+        "max": 32767,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "每组卷积核 C×H×W 超出官方上限"
+      },
+      {
+        "id": "X5-CONV2D-STRIDE-H",
+        "check_type": "range",
+        "field": "strides_h",
+        "min": 1,
+        "max": 256,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "步长超出官方基础范围"
+      },
+      {
+        "id": "X5-CONV2D-DILATION-H",
+        "check_type": "range",
+        "field": "dilation_h",
+        "min": 1,
+        "max": 16,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "膨胀率超出官方范围"
+      },
+      {
+        "id": "X5-CONV2D-STRIDE-W",
+        "check_type": "range",
+        "field": "strides_w",
+        "min": 1,
+        "max": 256,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "步长超出官方基础范围"
+      },
+      {
+        "id": "X5-CONV2D-DILATION-W",
+        "check_type": "range",
+        "field": "dilation_w",
+        "min": 1,
+        "max": 16,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "膨胀率超出官方范围"
+      },
+      {
+        "id": "X5-CONV2D-PAD-TOP",
+        "check_type": "range",
+        "field": "pads_top",
+        "min": 0,
+        "max": 256,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "有效 padding 超出官方 BPU 范围"
+      },
+      {
+        "id": "X5-CONV2D-PAD-LEFT",
+        "check_type": "range",
+        "field": "pads_left",
+        "min": 0,
+        "max": 256,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "有效 padding 超出官方 BPU 范围"
+      },
+      {
+        "id": "X5-CONV2D-PAD-BOTTOM",
+        "check_type": "range",
+        "field": "pads_bottom",
+        "min": 0,
+        "max": 256,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "有效 padding 超出官方 BPU 范围"
+      },
+      {
+        "id": "X5-CONV2D-PAD-RIGHT",
+        "check_type": "range",
+        "field": "pads_right",
+        "min": 0,
+        "max": 256,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "有效 padding 超出官方 BPU 范围"
+      },
+      {
+        "id": "X5-CONV2D-DILATED-STRIDE-H",
+        "check_type": "equals",
+        "field": "strides_h",
+        "value": 1,
+        "checkability": "auto_check",
+        "when": {
+          "field": "has_dilation",
+          "op": "equals",
+          "value": true
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "膨胀卷积仅支持 stride=1"
+      },
+      {
+        "id": "X5-CONV2D-DILATED-DIVISIBLE-H",
+        "check_type": "equals",
+        "field": "dilation_h_divisible",
+        "value": true,
+        "checkability": "auto_check",
+        "when": {
+          "field": "has_dilation",
+          "op": "equals",
+          "value": true
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "输入空间维度须能被对应 dilation 整除"
+      },
+      {
+        "id": "X5-CONV2D-DILATED-STRIDE-W",
+        "check_type": "equals",
+        "field": "strides_w",
+        "value": 1,
+        "checkability": "auto_check",
+        "when": {
+          "field": "has_dilation",
+          "op": "equals",
+          "value": true
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "膨胀卷积仅支持 stride=1"
+      },
+      {
+        "id": "X5-CONV2D-DILATED-DIVISIBLE-W",
+        "check_type": "equals",
+        "field": "dilation_w_divisible",
+        "value": true,
+        "checkability": "auto_check",
+        "when": {
+          "field": "has_dilation",
+          "op": "equals",
+          "value": true
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "输入空间维度须能被对应 dilation 整除"
+      },
+      {
+        "id": "X5-CONV2D-DILATED-OUTPUT",
+        "check_type": "equals",
+        "field": "quantized_output_dtype",
+        "value": "int8",
+        "checkability": "conditional",
+        "when": {
+          "field": "has_dilation",
+          "op": "equals",
+          "value": true
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "膨胀卷积仅支持量化后 int8 输出；原 ONNX float32 无法证明实际量化精度"
+      },
+      {
+        "id": "X5-CONV2D-CHANNEL-IN_CHANNELS_PER_GROUP",
+        "check_type": "max_value",
+        "field": "in_channels_per_group",
+        "max": 8192,
+        "checkability": "conditional",
+        "when": {
+          "field": "in_channels_per_group",
+          "op": "greater_than",
+          "value": 8192
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "常规通道上限 8192 与末端子图放宽 65536 的适用性需核实；Kernel N 上限与输出通道条文的关系需审查"
+      },
+      {
+        "id": "X5-CONV2D-CHANNEL-OUT_CHANNELS_PER_GROUP",
+        "check_type": "max_value",
+        "field": "out_channels_per_group",
+        "max": 8192,
+        "checkability": "conditional",
+        "when": {
+          "field": "out_channels_per_group",
+          "op": "greater_than",
+          "value": 8192
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "常规通道上限 8192 与末端子图放宽 65536 的适用性需核实；Kernel N 上限与输出通道条文的关系需审查"
+      },
+      {
+        "id": "X5-CONV2D-CHANNEL-OUT_CHANNELS",
+        "check_type": "max_value",
+        "field": "out_channels",
+        "max": 8192,
+        "checkability": "conditional",
+        "when": {
+          "field": "out_channels",
+          "op": "greater_than",
+          "value": 8192
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "常规通道上限 8192 与末端子图放宽 65536 的适用性需核实；Kernel N 上限与输出通道条文的关系需审查"
+      }
+    ],
+    "exclusions": [
+      "Conv→Add shortcut 的 stride 措辞存在版本差异：RDK 为 2，手册为 {1,2}；不自动套用。",
+      "通道与 Kernel N/C 限制及量化末端放宽的交互：仅条件提示，不判 FAIL。",
+      "CPU 支持列中的 auto_pad、对称 pads 及 dtype 条款不作为 BPU 条款。",
+      "通用 shape、字节大小、真实内存、CPU/BPU 分配、延迟、量化精度未覆盖。"
+    ],
+    "review_status": "reviewed_with_exclusions"
+  },
+  "nodes": [
+    {
+      "id": "main/node_000000",
+      "original_name": "input_identity",
+      "op_type": "Identity",
+      "domain": "",
+      "inputs": [
+        "image"
+      ],
+      "outputs": [
+        "copied"
+      ],
+      "attributes": {}
+    },
+    {
+      "id": "main/node_000001",
+      "original_name": "to_nhwc",
+      "op_type": "Transpose",
+      "domain": "",
+      "inputs": [
+        "copied"
+      ],
+      "outputs": [
+        "nhwc"
+      ],
+      "attributes": {
+        "perm": [
+          0,
+          2,
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "id": "main/node_000002",
+      "original_name": "back_nchw",
+      "op_type": "Transpose",
+      "domain": "",
+      "inputs": [
+        "nhwc"
+      ],
+      "outputs": [
+        "nchw"
+      ],
+      "attributes": {
+        "perm": [
+          0,
+          3,
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "main/node_000003",
+      "original_name": "same_float_cast",
+      "op_type": "Cast",
+      "domain": "",
+      "inputs": [
+        "nchw"
+      ],
+      "outputs": [
+        "same_dtype"
+      ],
+      "attributes": {
+        "to": 1
+      }
+    },
+    {
+      "id": "main/node_000004",
+      "original_name": "same_shape_reshape",
+      "op_type": "Reshape",
+      "domain": "",
+      "inputs": [
+        "same_dtype",
+        "target_shape"
+      ],
+      "outputs": [
+        "same_shape"
+      ],
+      "attributes": {}
+    },
+    {
+      "id": "main/node_000005",
+      "original_name": "normal_conv",
+      "op_type": "Conv",
+      "domain": "",
+      "inputs": [
+        "same_shape",
+        "weight"
+      ],
+      "outputs": [
+        "features"
+      ],
+      "attributes": {},
+      "conv": {
+        "scope": "conv2d",
+        "fields": {
+          "input_w": 4,
+          "input_dtype": "float32",
+          "output_rank": 4,
+          "output_c": 2,
+          "output_h": 4,
+          "kernel_elements_per_group": 2,
+          "dilation_w_divisible": true,
+          "quantized_subgraph_last": null,
+          "quantized_output_dtype": null,
+          "output_w": 4,
+          "strides_w": 1,
+          "has_dilation": false,
+          "pads_right": 0,
+          "shortcut_fusion": null,
+          "input_h": 4,
+          "kernel_w": 1,
+          "input_c": 2,
+          "dilation_h_divisible": true,
+          "input_n": 1,
+          "pads_top": 0,
+          "output_n": 1,
+          "output_dtype": "float32",
+          "dilation_h": 1,
+          "pads_bottom": 0,
+          "out_channels_per_group": 2,
+          "auto_pad": "NOTSET",
+          "out_channels": 2,
+          "pads_left": 0,
+          "kernel_h": 1,
+          "strides_h": 1,
+          "input_rank": 4,
+          "group": 1,
+          "weight_shape": [
+            2,
+            2,
+            1,
+            1
+          ],
+          "in_channels_per_group": 2,
+          "dilation_w": 1
+        },
+        "issues": []
+      }
+    },
+    {
+      "id": "main/node_000006",
+      "original_name": "inference_bn",
+      "op_type": "BatchNormalization",
+      "domain": "",
+      "inputs": [
+        "features",
+        "scale",
+        "bias",
+        "mean",
+        "variance"
+      ],
+      "outputs": [
+        "prediction"
+      ],
+      "attributes": {}
+    }
+  ],
+  "tensors": [
+    {
+      "name": "image",
+      "shape": [
+        1,
+        2,
+        4,
+        4
+      ],
+      "dtype": "float32",
+      "producer": null,
+      "consumers": [
+        "main/node_000000"
+      ],
+      "kind": "graph_input",
+      "is_graph_input": true,
+      "is_graph_output": false,
+      "is_initializer": false
+    },
+    {
+      "name": "copied",
+      "shape": [
+        1,
+        2,
+        4,
+        4
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000000",
+      "consumers": [
+        "main/node_000001"
+      ],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": false
+    },
+    {
+      "name": "nhwc",
+      "shape": [
+        1,
+        4,
+        4,
+        2
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000001",
+      "consumers": [
+        "main/node_000002"
+      ],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": false
+    },
+    {
+      "name": "nchw",
+      "shape": [
+        1,
+        2,
+        4,
+        4
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000002",
+      "consumers": [
+        "main/node_000003"
+      ],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": false
+    },
+    {
+      "name": "same_dtype",
+      "shape": [
+        1,
+        2,
+        4,
+        4
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000003",
+      "consumers": [
+        "main/node_000004"
+      ],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": false
+    },
+    {
+      "name": "same_shape",
+      "shape": [
+        1,
+        2,
+        4,
+        4
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000004",
+      "consumers": [
+        "main/node_000005"
+      ],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": false
+    },
+    {
+      "name": "features",
+      "shape": [
+        1,
+        2,
+        4,
+        4
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000005",
+      "consumers": [
+        "main/node_000006"
+      ],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": false
+    },
+    {
+      "name": "prediction",
+      "shape": [
+        1,
+        2,
+        4,
+        4
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000006",
+      "consumers": [],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": true,
+      "is_initializer": false
+    },
+    {
+      "name": "target_shape",
+      "shape": [
+        4
+      ],
+      "dtype": "int64",
+      "producer": null,
+      "consumers": [
+        "main/node_000004"
+      ],
+      "kind": "initializer",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": true,
+      "small_constant": {
+        "status": "KNOWN",
+        "values": [
+          0,
+          2,
+          4,
+          4
+        ],
+        "shape": [
+          4
+        ],
+        "dtype": "int64",
+        "reason": null,
+        "source": "initializer"
+      }
+    },
+    {
+      "name": "weight",
+      "shape": [
+        2,
+        2,
+        1,
+        1
+      ],
+      "dtype": "float32",
+      "producer": null,
+      "consumers": [
+        "main/node_000005"
+      ],
+      "kind": "initializer",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": true
+    },
+    {
+      "name": "scale",
+      "shape": [
+        2
+      ],
+      "dtype": "float32",
+      "producer": null,
+      "consumers": [
+        "main/node_000006"
+      ],
+      "kind": "initializer",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": true
+    },
+    {
+      "name": "bias",
+      "shape": [
+        2
+      ],
+      "dtype": "float32",
+      "producer": null,
+      "consumers": [
+        "main/node_000006"
+      ],
+      "kind": "initializer",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": true
+    },
+    {
+      "name": "mean",
+      "shape": [
+        2
+      ],
+      "dtype": "float32",
+      "producer": null,
+      "consumers": [
+        "main/node_000006"
+      ],
+      "kind": "initializer",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": true
+    },
+    {
+      "name": "variance",
+      "shape": [
+        2
+      ],
+      "dtype": "float32",
+      "producer": null,
+      "consumers": [
+        "main/node_000006"
+      ],
+      "kind": "initializer",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": true
+    }
+  ],
+  "edges": [
+    {
+      "source": "main/node_000000",
+      "target": "main/node_000001",
+      "tensor": "copied"
+    },
+    {
+      "source": "main/node_000001",
+      "target": "main/node_000002",
+      "tensor": "nhwc"
+    },
+    {
+      "source": "main/node_000002",
+      "target": "main/node_000003",
+      "tensor": "nchw"
+    },
+    {
+      "source": "main/node_000003",
+      "target": "main/node_000004",
+      "tensor": "same_dtype"
+    },
+    {
+      "source": "main/node_000004",
+      "target": "main/node_000005",
+      "tensor": "same_shape"
+    },
+    {
+      "source": "main/node_000005",
+      "target": "main/node_000006",
+      "tensor": "features"
+    }
+  ],
+  "diagnostics": [
+    {
+      "node_id": "main/node_000000",
+      "status": "NOT_COVERED",
+      "results": [],
+      "issues": [],
+      "suggestions": []
+    },
+    {
+      "node_id": "main/node_000001",
+      "status": "NOT_COVERED",
+      "results": [],
+      "issues": [],
+      "suggestions": []
+    },
+    {
+      "node_id": "main/node_000002",
+      "status": "NOT_COVERED",
+      "results": [],
+      "issues": [],
+      "suggestions": []
+    },
+    {
+      "node_id": "main/node_000003",
+      "status": "NOT_COVERED",
+      "results": [],
+      "issues": [],
+      "suggestions": []
+    },
+    {
+      "node_id": "main/node_000004",
+      "status": "NOT_COVERED",
+      "results": [],
+      "issues": [],
+      "suggestions": []
+    },
+    {
+      "node_id": "main/node_000005",
+      "status": "NO_VIOLATION_FOUND",
+      "scope": "conv2d",
+      "results": [
+        {
+          "rule_id": "X5-CONV2D-KERNEL-H",
+          "field": "kernel_h",
+          "actual": 1,
+          "expected": {
+            "min": 1,
+            "max": 31
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-KERNEL-W",
+          "field": "kernel_w",
+          "actual": 1,
+          "expected": {
+            "min": 1,
+            "max": 31
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-KERNEL-VOLUME",
+          "field": "kernel_elements_per_group",
+          "actual": 2,
+          "expected": {
+            "max": 32767
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-STRIDE-H",
+          "field": "strides_h",
+          "actual": 1,
+          "expected": {
+            "min": 1,
+            "max": 256
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-DILATION-H",
+          "field": "dilation_h",
+          "actual": 1,
+          "expected": {
+            "min": 1,
+            "max": 16
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-STRIDE-W",
+          "field": "strides_w",
+          "actual": 1,
+          "expected": {
+            "min": 1,
+            "max": 256
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-DILATION-W",
+          "field": "dilation_w",
+          "actual": 1,
+          "expected": {
+            "min": 1,
+            "max": 16
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-PAD-TOP",
+          "field": "pads_top",
+          "actual": 0,
+          "expected": {
+            "min": 0,
+            "max": 256
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-PAD-LEFT",
+          "field": "pads_left",
+          "actual": 0,
+          "expected": {
+            "min": 0,
+            "max": 256
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-PAD-BOTTOM",
+          "field": "pads_bottom",
+          "actual": 0,
+          "expected": {
+            "min": 0,
+            "max": 256
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-PAD-RIGHT",
+          "field": "pads_right",
+          "actual": 0,
+          "expected": {
+            "min": 0,
+            "max": 256
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-DILATED-STRIDE-H",
+          "field": "strides_h",
+          "actual": 1,
+          "expected": {
+            "equals": 1
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        },
+        {
+          "rule_id": "X5-CONV2D-DILATED-DIVISIBLE-H",
+          "field": "dilation_h_divisible",
+          "actual": true,
+          "expected": {
+            "equals": true
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        },
+        {
+          "rule_id": "X5-CONV2D-DILATED-STRIDE-W",
+          "field": "strides_w",
+          "actual": 1,
+          "expected": {
+            "equals": 1
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        },
+        {
+          "rule_id": "X5-CONV2D-DILATED-DIVISIBLE-W",
+          "field": "dilation_w_divisible",
+          "actual": true,
+          "expected": {
+            "equals": true
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        },
+        {
+          "rule_id": "X5-CONV2D-DILATED-OUTPUT",
+          "field": "quantized_output_dtype",
+          "actual": null,
+          "expected": {
+            "equals": "int8"
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "conditional",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        },
+        {
+          "rule_id": "X5-CONV2D-CHANNEL-IN_CHANNELS_PER_GROUP",
+          "field": "in_channels_per_group",
+          "actual": 2,
+          "expected": {
+            "max": 8192
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "conditional",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        },
+        {
+          "rule_id": "X5-CONV2D-CHANNEL-OUT_CHANNELS_PER_GROUP",
+          "field": "out_channels_per_group",
+          "actual": 2,
+          "expected": {
+            "max": 8192
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "conditional",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        },
+        {
+          "rule_id": "X5-CONV2D-CHANNEL-OUT_CHANNELS",
+          "field": "out_channels",
+          "actual": 2,
+          "expected": {
+            "max": 8192
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "conditional",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        }
+      ],
+      "issues": [],
+      "suggestions": [
+        {
+          "node_id": "main/node_000005",
+          "rule_id": null,
+          "category": "无需修改",
+          "evidence": {
+            "status": "NO_VIOLATION_FOUND"
+          },
+          "text": "目前没有静态违规证据支持修改该节点；先补足未知信息并验证工具链。",
+          "validation_needed": "实际工具链 checker"
+        }
+      ]
+    },
+    {
+      "node_id": "main/node_000006",
+      "status": "NOT_COVERED",
+      "results": [],
+      "issues": [],
+      "suggestions": []
+    }
+  ],
+  "traces": [],
+  "summary": {
+    "all_status_counts": {
+      "NOT_COVERED": 6,
+      "NO_VIOLATION_FOUND": 1
+    },
+    "conv_status_counts": {
+      "NO_VIOLATION_FOUND": 1
+    },
+    "conv_node_count": 1,
+    "conv2d_checked_count": 1
+  },
+  "unverified_assumptions": [],
+  "limitations": [
+    "尚未用实际工具链验证：未经过 OpenExplorer/hb_mapper 实测。",
+    "V1 仅检查已收录的标准 ONNX Conv2D 规则，其他算子未覆盖。",
+    "静态检查不能确定真实 CPU/BPU 分配、量化误差、延迟、峰值 DDR 或任务精度。",
+    "路径只表示数据依赖，不表示下游节点违规。",
+    "模型 SHA256 仅覆盖 .onnx 文件；external data 内容不包含在该摘要中。"
+  ],
+  "resource_analysis": {
+    "schema_version": "1.0",
+    "units": {
+      "bytes": "B",
+      "mib_divisor": 1048576,
+      "mb_divisor": 1000000
+    },
+    "hypothetical_int8_label": "Hypothetical INT8 raw-payload scenario",
+    "tensor_records": [
+      {
+        "name": "image",
+        "resource_category": "model_input",
+        "shape": [
+          1,
+          2,
+          4,
+          4
+        ],
+        "dtype": "float32",
+        "storage_kind": "dense",
+        "element_count": 32,
+        "element_size_bytes": 4,
+        "raw_bytes": 128,
+        "mib": 0.0001220703125,
+        "mb": 0.000128,
+        "hypothetical_int8_bytes": 32,
+        "size_status": "KNOWN",
+        "shape_status": "KNOWN",
+        "dtype_status": "KNOWN",
+        "unknown_reason": null,
+        "producer_node_id": null,
+        "consumer_node_ids": [
+          "main/node_000000"
+        ],
+        "consumer_count": 1,
+        "shared_by_multiple_consumers": false,
+        "is_graph_output": false,
+        "is_graph_input": true,
+        "is_initializer": false,
+        "original_kind": "graph_input",
+        "classification_note": null
+      },
+      {
+        "name": "copied",
+        "resource_category": "intermediate_activation",
+        "shape": [
+          1,
+          2,
+          4,
+          4
+        ],
+        "dtype": "float32",
+        "storage_kind": "dense",
+        "element_count": 32,
+        "element_size_bytes": 4,
+        "raw_bytes": 128,
+        "mib": 0.0001220703125,
+        "mb": 0.000128,
+        "hypothetical_int8_bytes": 32,
+        "size_status": "KNOWN",
+        "shape_status": "KNOWN",
+        "dtype_status": "KNOWN",
+        "unknown_reason": null,
+        "producer_node_id": "main/node_000000",
+        "consumer_node_ids": [
+          "main/node_000001"
+        ],
+        "consumer_count": 1,
+        "shared_by_multiple_consumers": false,
+        "is_graph_output": false,
+        "is_graph_input": false,
+        "is_initializer": false,
+        "original_kind": "intermediate",
+        "classification_note": null
+      },
+      {
+        "name": "nhwc",
+        "resource_category": "intermediate_activation",
+        "shape": [
+          1,
+          4,
+          4,
+          2
+        ],
+        "dtype": "float32",
+        "storage_kind": "dense",
+        "element_count": 32,
+        "element_size_bytes": 4,
+        "raw_bytes": 128,
+        "mib": 0.0001220703125,
+        "mb": 0.000128,
+        "hypothetical_int8_bytes": 32,
+        "size_status": "KNOWN",
+        "shape_status": "KNOWN",
+        "dtype_status": "KNOWN",
+        "unknown_reason": null,
+        "producer_node_id": "main/node_000001",
+        "consumer_node_ids": [
+          "main/node_000002"
+        ],
+        "consumer_count": 1,
+        "shared_by_multiple_consumers": false,
+        "is_graph_output": false,
+        "is_graph_input": false,
+        "is_initializer": false,
+        "original_kind": "intermediate",
+        "classification_note": null
+      },
+      {
+        "name": "nchw",
+        "resource_category": "intermediate_activation",
+        "shape": [
+          1,
+          2,
+          4,
+          4
+        ],
+        "dtype": "float32",
+        "storage_kind": "dense",
+        "element_count": 32,
+        "element_size_bytes": 4,
+        "raw_bytes": 128,
+        "mib": 0.0001220703125,
+        "mb": 0.000128,
+        "hypothetical_int8_bytes": 32,
+        "size_status": "KNOWN",
+        "shape_status": "KNOWN",
+        "dtype_status": "KNOWN",
+        "unknown_reason": null,
+        "producer_node_id": "main/node_000002",
+        "consumer_node_ids": [
+          "main/node_000003"
+        ],
+        "consumer_count": 1,
+        "shared_by_multiple_consumers": false,
+        "is_graph_output": false,
+        "is_graph_input": false,
+        "is_initializer": false,
+        "original_kind": "intermediate",
+        "classification_note": null
+      },
+      {
+        "name": "same_dtype",
+        "resource_category": "intermediate_activation",
+        "shape": [
+          1,
+          2,
+          4,
+          4
+        ],
+        "dtype": "float32",
+        "storage_kind": "dense",
+        "element_count": 32,
+        "element_size_bytes": 4,
+        "raw_bytes": 128,
+        "mib": 0.0001220703125,
+        "mb": 0.000128,
+        "hypothetical_int8_bytes": 32,
+        "size_status": "KNOWN",
+        "shape_status": "KNOWN",
+        "dtype_status": "KNOWN",
+        "unknown_reason": null,
+        "producer_node_id": "main/node_000003",
+        "consumer_node_ids": [
+          "main/node_000004"
+        ],
+        "consumer_count": 1,
+        "shared_by_multiple_consumers": false,
+        "is_graph_output": false,
+        "is_graph_input": false,
+        "is_initializer": false,
+        "original_kind": "intermediate",
+        "classification_note": null
+      },
+      {
+        "name": "same_shape",
+        "resource_category": "intermediate_activation",
+        "shape": [
+          1,
+          2,
+          4,
+          4
+        ],
+        "dtype": "float32",
+        "storage_kind": "dense",
+        "element_count": 32,
+        "element_size_bytes": 4,
+        "raw_bytes": 128,
+        "mib": 0.0001220703125,
+        "mb": 0.000128,
+        "hypothetical_int8_bytes": 32,
+        "size_status": "KNOWN",
+        "shape_status": "KNOWN",
+        "dtype_status": "KNOWN",
+        "unknown_reason": null,
+        "producer_node_id": "main/node_000004",
+        "consumer_node_ids": [
+          "main/node_000005"
+        ],
+        "consumer_count": 1,
+        "shared_by_multiple_consumers": false,
+        "is_graph_output": false,
+        "is_graph_input": false,
+        "is_initializer": false,
+        "original_kind": "intermediate",
+        "classification_note": null
+      },
+      {
+        "name": "features",
+        "resource_category": "intermediate_activation",
+        "shape": [
+          1,
+          2,
+          4,
+          4
+        ],
+        "dtype": "float32",
+        "storage_kind": "dense",
+        "element_count": 32,
+        "element_size_bytes": 4,
+        "raw_bytes": 128,
+        "mib": 0.0001220703125,
+        "mb": 0.000128,
+        "hypothetical_int8_bytes": 32,
+        "size_status": "KNOWN",
+        "shape_status": "KNOWN",
+        "dtype_status": "KNOWN",
+        "unknown_reason": null,
+        "producer_node_id": "main/node_000005",
+        "consumer_node_ids": [
+          "main/node_000006"
+        ],
+        "consumer_count": 1,
+        "shared_by_multiple_consumers": false,
+        "is_graph_output": false,
+        "is_graph_input": false,
+        "is_initializer": false,
+        "original_kind": "intermediate",
+        "classification_note": null
+      },
+      {
+        "name": "prediction",
+        "resource_category": "model_output",
+        "shape": [
+          1,
+          2,
+          4,
+          4
+        ],
+        "dtype": "float32",
+        "storage_kind": "dense",
+        "element_count": 32,
+        "element_size_bytes": 4,
+        "raw_bytes": 128,
+        "mib": 0.0001220703125,
+        "mb": 0.000128,
+        "hypothetical_int8_bytes": 32,
+        "size_status": "KNOWN",
+        "shape_status": "KNOWN",
+        "dtype_status": "KNOWN",
+        "unknown_reason": null,
+        "producer_node_id": "main/node_000006",
+        "consumer_node_ids": [],
+        "consumer_count": 0,
+        "shared_by_multiple_consumers": false,
+        "is_graph_output": true,
+        "is_graph_input": false,
+        "is_initializer": false,
+        "original_kind": "intermediate",
+        "classification_note": null
+      },
+      {
+        "name": "target_shape",
+        "resource_category": "initializer",
+        "shape": [
+          4
+        ],
+        "dtype": "int64",
+        "storage_kind": "dense",
+        "element_count": 4,
+        "element_size_bytes": 8,
+        "raw_bytes": 32,
+        "mib": 3.0517578125e-05,
+        "mb": 3.2e-05,
+        "hypothetical_int8_bytes": 4,
+        "size_status": "KNOWN",
+        "shape_status": "KNOWN",
+        "dtype_status": "KNOWN",
+        "unknown_reason": null,
+        "producer_node_id": null,
+        "consumer_node_ids": [
+          "main/node_000004"
+        ],
+        "consumer_count": 1,
+        "shared_by_multiple_consumers": false,
+        "is_graph_output": false,
+        "is_graph_input": false,
+        "is_initializer": true,
+        "original_kind": "initializer",
+        "classification_note": null
+      },
+      {
+        "name": "weight",
+        "resource_category": "initializer",
+        "shape": [
+          2,
+          2,
+          1,
+          1
+        ],
+        "dtype": "float32",
+        "storage_kind": "dense",
+        "element_count": 4,
+        "element_size_bytes": 4,
+        "raw_bytes": 16,
+        "mib": 1.52587890625e-05,
+        "mb": 1.6e-05,
+        "hypothetical_int8_bytes": 4,
+        "size_status": "KNOWN",
+        "shape_status": "KNOWN",
+        "dtype_status": "KNOWN",
+        "unknown_reason": null,
+        "producer_node_id": null,
+        "consumer_node_ids": [
+          "main/node_000005"
+        ],
+        "consumer_count": 1,
+        "shared_by_multiple_consumers": false,
+        "is_graph_output": false,
+        "is_graph_input": false,
+        "is_initializer": true,
+        "original_kind": "initializer",
+        "classification_note": null
+      },
+      {
+        "name": "scale",
+        "resource_category": "initializer",
+        "shape": [
+          2
+        ],
+        "dtype": "float32",
+        "storage_kind": "dense",
+        "element_count": 2,
+        "element_size_bytes": 4,
+        "raw_bytes": 8,
+        "mib": 7.62939453125e-06,
+        "mb": 8e-06,
+        "hypothetical_int8_bytes": 2,
+        "size_status": "KNOWN",
+        "shape_status": "KNOWN",
+        "dtype_status": "KNOWN",
+        "unknown_reason": null,
+        "producer_node_id": null,
+        "consumer_node_ids": [
+          "main/node_000006"
+        ],
+        "consumer_count": 1,
+        "shared_by_multiple_consumers": false,
+        "is_graph_output": false,
+        "is_graph_input": false,
+        "is_initializer": true,
+        "original_kind": "initializer",
+        "classification_note": null
+      },
+      {
+        "name": "bias",
+        "resource_category": "initializer",
+        "shape": [
+          2
+        ],
+        "dtype": "float32",
+        "storage_kind": "dense",
+        "element_count": 2,
+        "element_size_bytes": 4,
+        "raw_bytes": 8,
+        "mib": 7.62939453125e-06,
+        "mb": 8e-06,
+        "hypothetical_int8_bytes": 2,
+        "size_status": "KNOWN",
+        "shape_status": "KNOWN",
+        "dtype_status": "KNOWN",
+        "unknown_reason": null,
+        "producer_node_id": null,
+        "consumer_node_ids": [
+          "main/node_000006"
+        ],
+        "consumer_count": 1,
+        "shared_by_multiple_consumers": false,
+        "is_graph_output": false,
+        "is_graph_input": false,
+        "is_initializer": true,
+        "original_kind": "initializer",
+        "classification_note": null
+      },
+      {
+        "name": "mean",
+        "resource_category": "initializer",
+        "shape": [
+          2
+        ],
+        "dtype": "float32",
+        "storage_kind": "dense",
+        "element_count": 2,
+        "element_size_bytes": 4,
+        "raw_bytes": 8,
+        "mib": 7.62939453125e-06,
+        "mb": 8e-06,
+        "hypothetical_int8_bytes": 2,
+        "size_status": "KNOWN",
+        "shape_status": "KNOWN",
+        "dtype_status": "KNOWN",
+        "unknown_reason": null,
+        "producer_node_id": null,
+        "consumer_node_ids": [
+          "main/node_000006"
+        ],
+        "consumer_count": 1,
+        "shared_by_multiple_consumers": false,
+        "is_graph_output": false,
+        "is_graph_input": false,
+        "is_initializer": true,
+        "original_kind": "initializer",
+        "classification_note": null
+      },
+      {
+        "name": "variance",
+        "resource_category": "initializer",
+        "shape": [
+          2
+        ],
+        "dtype": "float32",
+        "storage_kind": "dense",
+        "element_count": 2,
+        "element_size_bytes": 4,
+        "raw_bytes": 8,
+        "mib": 7.62939453125e-06,
+        "mb": 8e-06,
+        "hypothetical_int8_bytes": 2,
+        "size_status": "KNOWN",
+        "shape_status": "KNOWN",
+        "dtype_status": "KNOWN",
+        "unknown_reason": null,
+        "producer_node_id": null,
+        "consumer_node_ids": [
+          "main/node_000006"
+        ],
+        "consumer_count": 1,
+        "shared_by_multiple_consumers": false,
+        "is_graph_output": false,
+        "is_graph_input": false,
+        "is_initializer": true,
+        "original_kind": "initializer",
+        "classification_note": null
+      }
+    ],
+    "summary": {
+      "initializers": {
+        "tensor_count": 6,
+        "known_bytes_sum": 80,
+        "unknown_tensor_count": 0,
+        "completeness": "COMPLETE"
+      },
+      "model_outputs": {
+        "tensor_count": 1,
+        "known_bytes_sum": 128,
+        "unknown_tensor_count": 0,
+        "completeness": "COMPLETE"
+      },
+      "model_inputs": {
+        "tensor_count": 1,
+        "known_bytes_sum": 128,
+        "unknown_tensor_count": 0,
+        "completeness": "COMPLETE"
+      },
+      "constants": {
+        "tensor_count": 0,
+        "known_bytes_sum": 0,
+        "unknown_tensor_count": 0,
+        "completeness": "COMPLETE"
+      },
+      "intermediate_activations": {
+        "tensor_count": 6,
+        "known_bytes_sum": 768,
+        "unknown_tensor_count": 0,
+        "completeness": "COMPLETE"
+      },
+      "other_unknown": {
+        "tensor_count": 0,
+        "known_bytes_sum": 0,
+        "unknown_tensor_count": 0,
+        "completeness": "COMPLETE"
+      },
+      "largest_intermediates": [
+        "copied",
+        "features",
+        "nchw",
+        "nhwc",
+        "same_dtype",
+        "same_shape"
+      ],
+      "largest_outputs": [
+        "prediction"
+      ],
+      "multi_consumer_intermediate_count": 0,
+      "unknown_tensor_names": [],
+      "limitations": [
+        "Theoretical logical dense Tensor payload only; not measured runtime/BPU/DDR memory.",
+        "Known sums are not peak memory: lifetimes, aliasing, reuse, layout, padding and fusion are unknown.",
+        "Hypothetical INT8 raw-payload scenario only; not actual quantization, placement, accuracy or performance.",
+        "bool uses an assumed one logical byte representation; packed/string/sparse/container types unsupported.",
+        "Each Tensor is counted once; initializer/output overlaps use initializer as primary category."
+      ]
+    }
+  },
+  "optimization_candidates": {
+    "schema_version": "1.0",
+    "candidates": [
+      {
+        "pattern": "IDENTITY",
+        "node_ids": [
+          "main/node_000000"
+        ],
+        "node_names": [
+          "input_identity"
+        ],
+        "tensor_names": [
+          "image",
+          "copied"
+        ],
+        "classification": "SEMANTICALLY_REDUNDANT",
+        "evidence": {
+          "value_transformation": "identity",
+          "input_tensor": "image",
+          "output_tensor": "copied",
+          "output_consumer_count": 1,
+          "schema_version": 14,
+          "input_metadata_missing": false,
+          "connections": [],
+          "tensor_interfaces": [
+            {
+              "name": "image",
+              "is_graph_input": true,
+              "is_graph_output": false,
+              "producer": null,
+              "consumers": [
+                "main/node_000000"
+              ]
+            },
+            {
+              "name": "copied",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": "main/node_000000",
+              "consumers": [
+                "main/node_000001"
+              ]
+            }
+          ]
+        },
+        "explanation": "Supported local operator semantics establish an unchanged value/shape transformation.",
+        "conditions": [
+          "Preserve public input/output names, shapes, dtypes and all consumer connections",
+          "Apply to a separate model copy only after validating all blockers and overlapping candidates"
+        ],
+        "blockers": [],
+        "benefit_hint": "Potentially fewer graph operations if retained by the compiler; no measured speed or memory improvement",
+        "verification_needed": [
+          "ONNX checker on a future rewritten copy",
+          "Compare input/output shapes, dtypes and public output names",
+          "ONNX Runtime numerical comparison on representative inputs before any future rewrite; check task metrics where relevant"
+        ],
+        "reachable_outputs": null,
+        "reachability_status": "ON_DEMAND",
+        "overlap_with": [],
+        "source_urls": [
+          "https://onnx.ai/onnx/operators/onnx__Identity.html"
+        ],
+        "limitations": [
+          "No model rewrite performed",
+          "No compiler fusion, CPU/BPU placement or performance measurement"
+        ],
+        "candidate_id": "OPT-0001"
+      },
+      {
+        "pattern": "TRANSPOSE_INVERSE_PAIR",
+        "node_ids": [
+          "main/node_000001",
+          "main/node_000002"
+        ],
+        "node_names": [
+          "to_nhwc",
+          "back_nchw"
+        ],
+        "tensor_names": [
+          "copied",
+          "nhwc",
+          "nchw"
+        ],
+        "classification": "SEMANTICALLY_REDUNDANT",
+        "evidence": {
+          "perm_a": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "perm_b": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "composite_perm": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "intermediate_consumer_count": 1,
+          "intermediate_is_graph_output": false,
+          "connections": [
+            {
+              "source": "main/node_000001",
+              "target": "main/node_000002",
+              "tensor": "nhwc"
+            }
+          ],
+          "tensor_interfaces": [
+            {
+              "name": "copied",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": "main/node_000000",
+              "consumers": [
+                "main/node_000001"
+              ]
+            },
+            {
+              "name": "nhwc",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": "main/node_000001",
+              "consumers": [
+                "main/node_000002"
+              ]
+            },
+            {
+              "name": "nchw",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": "main/node_000002",
+              "consumers": [
+                "main/node_000003"
+              ]
+            }
+          ]
+        },
+        "explanation": "Supported local operator semantics establish an unchanged value/shape transformation.",
+        "conditions": [
+          "Preserve public input/output names, shapes, dtypes and all consumer connections",
+          "Apply to a separate model copy only after validating all blockers and overlapping candidates"
+        ],
+        "blockers": [],
+        "benefit_hint": "Potentially fewer graph operations if retained by the compiler; no measured speed or memory improvement",
+        "verification_needed": [
+          "ONNX checker on a future rewritten copy",
+          "Compare input/output shapes, dtypes and public output names",
+          "ONNX Runtime numerical comparison on representative inputs before any future rewrite; check task metrics where relevant"
+        ],
+        "reachable_outputs": null,
+        "reachability_status": "ON_DEMAND",
+        "overlap_with": [],
+        "source_urls": [
+          "https://onnx.ai/onnx/operators/onnx__Transpose.html",
+          "https://onnx.ai/onnx/operators/onnx__Transpose.html"
+        ],
+        "limitations": [
+          "No model rewrite performed",
+          "No compiler fusion, CPU/BPU placement or performance measurement"
+        ],
+        "candidate_id": "OPT-0002"
+      },
+      {
+        "pattern": "CAST_SAME_DTYPE",
+        "node_ids": [
+          "main/node_000003"
+        ],
+        "node_names": [
+          "same_float_cast"
+        ],
+        "tensor_names": [
+          "nchw",
+          "same_dtype"
+        ],
+        "classification": "SEMANTICALLY_REDUNDANT",
+        "evidence": {
+          "input_dtype": "float32",
+          "destination_dtype": "float32",
+          "to": 1,
+          "schema_version": 13,
+          "connections": [],
+          "tensor_interfaces": [
+            {
+              "name": "nchw",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": "main/node_000002",
+              "consumers": [
+                "main/node_000003"
+              ]
+            },
+            {
+              "name": "same_dtype",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": "main/node_000003",
+              "consumers": [
+                "main/node_000004"
+              ]
+            }
+          ]
+        },
+        "explanation": "Supported local operator semantics establish an unchanged value/shape transformation.",
+        "conditions": [
+          "Preserve public input/output names, shapes, dtypes and all consumer connections",
+          "Apply to a separate model copy only after validating all blockers and overlapping candidates"
+        ],
+        "blockers": [],
+        "benefit_hint": "Potentially fewer graph operations if retained by the compiler; no measured speed or memory improvement",
+        "verification_needed": [
+          "ONNX checker on a future rewritten copy",
+          "Compare input/output shapes, dtypes and public output names",
+          "ONNX Runtime numerical comparison on representative inputs before any future rewrite; check task metrics where relevant"
+        ],
+        "reachable_outputs": null,
+        "reachability_status": "ON_DEMAND",
+        "overlap_with": [],
+        "source_urls": [
+          "https://onnx.ai/onnx/operators/onnx__Cast.html"
+        ],
+        "limitations": [
+          "No model rewrite performed",
+          "No compiler fusion, CPU/BPU placement or performance measurement"
+        ],
+        "candidate_id": "OPT-0003"
+      },
+      {
+        "pattern": "RESHAPE_NOOP",
+        "node_ids": [
+          "main/node_000004"
+        ],
+        "node_names": [
+          "same_shape_reshape"
+        ],
+        "tensor_names": [
+          "same_dtype",
+          "target_shape",
+          "same_shape"
+        ],
+        "classification": "SEMANTICALLY_REDUNDANT",
+        "evidence": {
+          "input_shape": [
+            1,
+            2,
+            4,
+            4
+          ],
+          "target_values": [
+            0,
+            2,
+            4,
+            4
+          ],
+          "resolved_target": [
+            1,
+            2,
+            4,
+            4
+          ],
+          "allowzero": 0,
+          "schema_version": 14,
+          "connections": [],
+          "tensor_interfaces": [
+            {
+              "name": "same_dtype",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": "main/node_000003",
+              "consumers": [
+                "main/node_000004"
+              ]
+            },
+            {
+              "name": "target_shape",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": null,
+              "consumers": [
+                "main/node_000004"
+              ]
+            },
+            {
+              "name": "same_shape",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": "main/node_000004",
+              "consumers": [
+                "main/node_000005"
+              ]
+            }
+          ]
+        },
+        "explanation": "Supported local operator semantics establish an unchanged value/shape transformation.",
+        "conditions": [
+          "Preserve public input/output names, shapes, dtypes and all consumer connections",
+          "Apply to a separate model copy only after validating all blockers and overlapping candidates"
+        ],
+        "blockers": [],
+        "benefit_hint": "Potentially fewer graph operations if retained by the compiler; no measured speed or memory improvement",
+        "verification_needed": [
+          "ONNX checker on a future rewritten copy",
+          "Compare input/output shapes, dtypes and public output names",
+          "ONNX Runtime numerical comparison on representative inputs before any future rewrite; check task metrics where relevant"
+        ],
+        "reachable_outputs": null,
+        "reachability_status": "ON_DEMAND",
+        "overlap_with": [],
+        "source_urls": [
+          "https://onnx.ai/onnx/operators/onnx__Reshape.html"
+        ],
+        "limitations": [
+          "No model rewrite performed",
+          "No compiler fusion, CPU/BPU placement or performance measurement"
+        ],
+        "candidate_id": "OPT-0004"
+      },
+      {
+        "pattern": "CONV_BN_FUSION_REVIEW",
+        "node_ids": [
+          "main/node_000005",
+          "main/node_000006"
+        ],
+        "node_names": [
+          "normal_conv",
+          "inference_bn"
+        ],
+        "tensor_names": [
+          "same_shape",
+          "weight",
+          "features",
+          "scale",
+          "bias",
+          "mean",
+          "variance",
+          "prediction"
+        ],
+        "classification": "REVIEW_REQUIRED",
+        "evidence": {
+          "bn_schema_version": 15,
+          "inference_mode": true,
+          "conv_output_tensor": "features",
+          "conv_output_consumer_count": 1,
+          "channels": 2,
+          "bn_parameters": [
+            {
+              "name": "scale",
+              "shape": [
+                2
+              ],
+              "dtype": "float32",
+              "is_constant": true
+            },
+            {
+              "name": "bias",
+              "shape": [
+                2
+              ],
+              "dtype": "float32",
+              "is_constant": true
+            },
+            {
+              "name": "mean",
+              "shape": [
+                2
+              ],
+              "dtype": "float32",
+              "is_constant": true
+            },
+            {
+              "name": "variance",
+              "shape": [
+                2
+              ],
+              "dtype": "float32",
+              "is_constant": true
+            }
+          ],
+          "epsilon": 1e-05,
+          "parameter_values_read": false,
+          "connections": [
+            {
+              "source": "main/node_000005",
+              "target": "main/node_000006",
+              "tensor": "features"
+            }
+          ],
+          "tensor_interfaces": [
+            {
+              "name": "same_shape",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": "main/node_000004",
+              "consumers": [
+                "main/node_000005"
+              ]
+            },
+            {
+              "name": "weight",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": null,
+              "consumers": [
+                "main/node_000005"
+              ]
+            },
+            {
+              "name": "features",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": "main/node_000005",
+              "consumers": [
+                "main/node_000006"
+              ]
+            },
+            {
+              "name": "scale",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": null,
+              "consumers": [
+                "main/node_000006"
+              ]
+            },
+            {
+              "name": "bias",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": null,
+              "consumers": [
+                "main/node_000006"
+              ]
+            },
+            {
+              "name": "mean",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": null,
+              "consumers": [
+                "main/node_000006"
+              ]
+            },
+            {
+              "name": "variance",
+              "is_graph_input": false,
+              "is_graph_output": false,
+              "producer": null,
+              "consumers": [
+                "main/node_000006"
+              ]
+            },
+            {
+              "name": "prediction",
+              "is_graph_input": false,
+              "is_graph_output": true,
+              "producer": "main/node_000006",
+              "consumers": []
+            }
+          ]
+        },
+        "explanation": "An actual Conv output directly enters inference BN; fixed-parameter fusion is a review opportunity, not evidence of compiler fusion.",
+        "conditions": [
+          "Preserve public input/output names, shapes, dtypes and all consumer connections",
+          "Apply to a separate model copy only after validating all blockers and overlapping candidates"
+        ],
+        "blockers": [
+          "Public graph output must retain name/interface: prediction"
+        ],
+        "benefit_hint": "Potentially fewer graph operations if retained by the compiler; no measured speed or memory improvement",
+        "verification_needed": [
+          "ONNX checker on a future rewritten copy",
+          "Compare input/output shapes, dtypes and public output names",
+          "ONNX Runtime numerical comparison on representative inputs before any future rewrite; check task metrics where relevant"
+        ],
+        "reachable_outputs": null,
+        "reachability_status": "ON_DEMAND",
+        "overlap_with": [],
+        "source_urls": [
+          "https://onnx.ai/onnx/operators/onnx__BatchNormalization.html"
+        ],
+        "limitations": [
+          "No model rewrite performed",
+          "No compiler fusion, CPU/BPU placement or performance measurement"
+        ],
+        "candidate_id": "OPT-0005"
+      }
+    ],
+    "summary": {
+      "candidate_count": 5,
+      "counts_by_pattern": {
+        "IDENTITY": 1,
+        "TRANSPOSE_INVERSE_PAIR": 1,
+        "CAST_SAME_DTYPE": 1,
+        "RESHAPE_NOOP": 1,
+        "CONV_BN_FUSION_REVIEW": 1
+      },
+      "counts_by_classification": {
+        "SEMANTICALLY_REDUNDANT": 4,
+        "REVIEW_REQUIRED": 1
+      },
+      "confirmed_local_redundancy_count": 4,
+      "insufficient_information_count": 0
+    },
+    "limitations": [
+      "Structural/semantic candidates are not X5 operator compatibility rules.",
+      "No rewrite, compiler fusion verification or measured performance gain.",
+      "Reachability is computed on demand from saved Tensor edges. Imported opset >23 is unreviewed."
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 # RDK X5 ONNX Doctor
 
-**纯终端、只读**的 ONNX Conv2D 静态诊断工具。根据版本化官方规则定位异常节点，沿 Tensor 依赖追踪到模型输出，提供终端搜索、过滤、节点详情和路径查询；保存 `analysis.json` 与 `report.md`。
+**纯终端、只读**的 ONNX Conv2D 静态诊断工具。根据版本化官方规则定位异常节点，沿 Tensor 依赖追踪到模型输出，提供终端搜索、过滤、节点详情和路径查询；保存 `analysis.json` 与 `report.md`。V1.1 新增输出/中间 Tensor 理论原始载荷统计与五种结构优化候选。
 
 V1 未经过 OpenExplorer/hb_mapper 实测，不能保证 BPU 执行、量化精度或性能。不评分、不改写模型、不执行 Docker/量化。其他算子解析展示但不检查。根据用户最新要求，**不生成 graph.html，不包含前端、浏览器交互或 Netron 依赖**。
 
@@ -52,13 +52,47 @@ pytest -q
 
 示例 Conv kernel_h=32，违反已收录规则 [1,31]；分叉后汇合，能到达 prediction 与 auxiliary 两个输出。已生成的小型模型和两份报告在 [examples](examples)。`python examples/regenerate_report.py` 可重建仓库内示例报告。
 
+## V1.1：资源与优化候选（纯终端）
+
+```bash
+python examples/generate_v1_1_demo.py
+python -m rdkx5_doctor analyze --model examples/v1_1_demo.onnx --out reports/demo-v1_1
+python -m rdkx5_doctor tensors --analysis reports/demo-v1_1/analysis.json --kind intermediate --sort bytes --limit 10
+python -m rdkx5_doctor tensors --analysis reports/demo-v1_1/analysis.json --kind output --json
+python -m rdkx5_doctor tensor --analysis reports/demo-v1_1/analysis.json --name prediction --json
+python -m rdkx5_doctor tensors --analysis reports/demo-v1_1/analysis.json --unknown --limit 0
+python -m rdkx5_doctor candidates --analysis reports/demo-v1_1/analysis.json
+python -m rdkx5_doctor candidates --analysis reports/demo-v1_1/analysis.json --pattern TRANSPOSE_INVERSE_PAIR --json
+python -m rdkx5_doctor candidate --analysis reports/demo-v1_1/analysis.json --id OPT-0002
+```
+
+四个新查询均读取保存的 JSON，不再加载模型，均支持 --json。Tensor 列表按 raw B 排序，未知最后；--sort name 按名称排序；--limit 0 表示全部。--kind 可选 all/output/intermediate/input/initializer/constant/unknown，unknown 指未分类类别；`--unknown` 独立过滤任何类别的未知尺寸。
+
+资源只使用 shape/dtype 的逻辑载荷。B 是精确整数；1 MiB=1,048,576 B，1 MB=1,000,000 B。静态 scalar/empty shape 支持；符号维度、未知维度、string/packed/sparse/container 类型保留未知及原因。initializer、输出、中间激活分别去重求已知字节和，存在未知成员则 PARTIAL。fanout 只表示消费者数量，不代表额外分配。
+
+**Hypothetical INT8 raw-payload scenario** 是假设元素数乘 1 B，不是实际量化结果。资源统计不代表 BPU/DDR/SRAM 分配或峰值内存，不预测部署可行性、延迟、FPS 或精度。
+
+| 模式 | 认定与限制 |
+|---|---|
+| IDENTITY | 标准域原值转发；公开输出或 fanout 需接口审查 |
+| TRANSPOSE_INVERSE_PAIR | 真实 Tensor 连接，两个 perm 组合为 identity；共享中间分支不能全局删除第一节点 |
+| CAST_SAME_DTYPE | 输入 dtype 与目标 `to` 明确相同且支持 |
+| RESHAPE_NOOP | 有界常量目标，按版本正确解析 0/-1/allowzero，目标逐维等于静态输入；相同元素数不足以证明 |
+| CONV_BN_FUSION_REVIEW | 直接相连且 BN 处于推理模式；参数/通道/精度/分支/接口需审查，不宣称编译器已经或尚未融合 |
+
+局部无变化分类为 SEMANTICALLY_REDUNDANT；融合/接口/共享分支为 REVIEW_REQUIRED；无法证明的观察为 INSUFFICIENT_INFORMATION。候选含实际内部 ID/Tensor、证据、条件、阻碍、重叠关系与未来验证步骤；没有删除或重写节点。需未来 ONNX checker、输出接口/shape 和 ONNX Runtime 数值对比。候选最后节点的下游输出仅在 candidate 查询时计算。
+
+新报告 schema=1.1，旧 nodes/inspect/trace 仍接受 1.0。旧报告无法查询新资源/候选，需重跑 analyze。保持原有 Conv2D 规则不变。版本与字段见 [schema 文档](docs/ANALYSIS_SCHEMA_V1_1.md)，语义与支持范围见 [ONNX 来源](references/optimization_semantics.md)。
+
+自带第二示例识别五种模式，prediction 原始载荷为 128 B；完整示例在 [examples/v1_1_demo-report](examples/v1_1_demo-report)。历史 V1 demo-report 保留 1.0 格式用于兼容性验证。
+
 ## Codex Skill
 
 用 Ubuntu VS Code + Codex 打开该仓库，仓库级入口为 `.agents/skills/rdk-x5-onnx-doctor/SKILL.md`。示例请求：
 
 > 使用 rdk-x5-onnx-doctor，分析 examples/demo.onnx 是否适合 RDK X5，通过终端查看异常节点参数和到两个输出的路径。
 
-Skill 调用确定性 Python 工具、读取机器事实，再生成节点绑定的解释与建议。CLI 可独立离线运行。这里是仓库级 Codex Skill，不是 ChatGPT Work 的插件安装包。用户本机 Codex 的自然语言发现流程仍需实际试用。
+Skill 调用确定性 Python 工具、读取机器事实，再生成节点绑定的解释与建议。可以继续要求“分析输出 Tensor 大小和大特征图”或“找冗余节点、逆 Transpose、no-op Reshape、量化前优化候选”。Codex 应根据资源/候选证据选择进一步 inspect/trace，而不是粘贴泛化建议。CLI 可独立离线运行。这里是仓库级 Codex Skill，不是 ChatGPT Work 的插件安装包。用户本机 Codex 的自然语言发现流程仍需实际试用。
 
 ## 覆盖与状态
 

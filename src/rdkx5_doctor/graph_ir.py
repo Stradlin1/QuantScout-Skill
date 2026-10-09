@@ -1,5 +1,5 @@
 """Tensor-labelled graph; node order is identity, never connectivity."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import networkx as nx
 
 @dataclass
@@ -9,6 +9,7 @@ class GraphIR:
     tensors: dict[str, dict]
     edges: list[dict]
     warnings: list[str]
+    small_constants: dict = field(default_factory=dict)
 
     def topology(self):
         graph = nx.DiGraph()

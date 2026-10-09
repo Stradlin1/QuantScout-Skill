@@ -6,6 +6,8 @@ import sys
 from .onnx_reader import read_model, ModelError
 from .rules import load_ruleset
 from .report import analyze, markdown
+from .resource_queries import register_commands, run_query
+from .text_utils import json_text
 
 DEFAULT_RULESET = Path(__file__).parent / 'resources' / 'rulesets' / 'x5-bayes-e'
 STATES = ['VIOLATION', 'NEEDS_VERIFICATION', 'NOT_COVERED', 'NO_VIOLATION_FOUND']
@@ -30,12 +32,13 @@ def parser():
         c.add_argument('--analysis', required=True, type=Path)
         c.add_argument('--node', required=True, help='内部 ID 或唯一的原始名称')
         c.add_argument('--json', action='store_true')
+    register_commands(sub)
     return p
 
 def load_analysis(path):
     try:
         data = json.loads(path.read_text(encoding='utf-8'))
-        if data.get('schema_version') != '1.0':
+        if data.get('schema_version') not in ('1.0', '1.1'):
             raise ValueError('不支持的 analysis schema_version')
         if not all(isinstance(data.get(key), list) for key in ('nodes','tensors','edges','diagnostics','traces')):
             raise ValueError('analysis 缺少节点、Tensor、边或诊断列表')
@@ -84,7 +87,7 @@ def queries(args):
                  and (not query or any(query in str(s).casefold() for s in [n['id'], n['original_name'], n['op_type'], *n['inputs'], *n['outputs']]))]
         rows = [{'id':n['id'], 'name':n['original_name'], 'operator':n['op_type'], 'status':diagnostics[n['id']]['status']} for n in nodes]
         if args.json:
-            print(json.dumps(rows, ensure_ascii=False, indent=2))
+            print(json_text(rows, ensure_ascii=False, indent=2))
         else:
             print('节点 ID\t算子\t状态\t原始名称')
             for row in rows:
@@ -96,7 +99,7 @@ def queries(args):
     diagnostic = diagnostics[node['id']]
     if args.command == 'trace':
         if args.json:
-            print(json.dumps(trace,ensure_ascii=False,indent=2))
+            print(json_text(trace,ensure_ascii=False,indent=2))
         else:
             print_trace(trace)
         return 0
@@ -104,11 +107,11 @@ def queries(args):
     facts = {'node':node, 'tensors':[tensors[name] for name in dict.fromkeys(node['inputs'] + node['outputs']) if name],
              'diagnostic':diagnostic, 'trace':trace}
     if args.json:
-        print(json.dumps(facts,ensure_ascii=False,indent=2))
+        print(json_text(facts,ensure_ascii=False,indent=2))
         return 0
     print(f"节点：{node['id']} / {display(node['original_name'])}\n算子：{display(node['domain'] or '标准 ONNX')} / {display(node['op_type'])}\n状态：{diagnostic['status']}")
-    print('参数：' + json.dumps(node.get('conv',node['attributes']),ensure_ascii=False,indent=2))
-    print('Tensor：' + json.dumps(facts['tensors'],ensure_ascii=False,indent=2))
+    print('参数：' + json_text(node.get('conv',node['attributes']),ensure_ascii=False,indent=2))
+    print('Tensor：' + json_text(facts['tensors'],ensure_ascii=False,indent=2))
     for result in diagnostic['results']:
         print(f"[{result['status']}] {result['rule_id']}：{result['field']} = {display(result['actual'])}，允许 {result['expected']}\n  {result['reason']}\n  来源：{result['source_url']} / {result['source_section']}")
     if not diagnostic['results']:
@@ -123,11 +126,13 @@ def queries(args):
 
 def display(value):
     # Escape terminal control sequences in untrusted model strings (including ANSI/OSC).
-    return json.dumps(str(value),ensure_ascii=False)[1:-1]
+    return json_text(str(value),ensure_ascii=False)[1:-1]
 
 def main(argv=None):
     args = parser().parse_args(argv)
     try:
+        if args.command in ('tensors','tensor','candidates','candidate'):
+            return run_query(args, load_analysis(Path(args.analysis)), display=display, node_trace=node_trace)
         if args.command in ('nodes','inspect','trace'):
             return queries(args)
         if args.command == 'rules':
@@ -142,7 +147,7 @@ def main(argv=None):
                 raise ValueError('输出路径不能覆盖原始模型')
         data = analyze(ir, rules, manifest)
         out.mkdir(parents=True, exist_ok=True)
-        (out / 'analysis.json').write_text(json.dumps(data,ensure_ascii=False,indent=2,allow_nan=False),encoding='utf-8')
+        (out / 'analysis.json').write_text(json_text(data,ensure_ascii=False,indent=2,allow_nan=False),encoding='utf-8')
         (out / 'report.md').write_text(markdown(data),encoding='utf-8')
         print(f"分析完成：{out}\nConv 状态：{data['summary']['conv_status_counts']}")
         names = {n['id']:n['original_name'] for n in data['nodes']}
@@ -154,12 +159,15 @@ def main(argv=None):
                         print(f"  {r['status']} {r['rule_id']}：{r['field']}={display(r['actual'])}，允许 {r['expected']}；{r['reason']}")
         for trace in data['traces']:
             print_trace(trace)
+        resources = data['resource_analysis']['summary']
+        print(f"Tensor 理论原始载荷：输出已知 {resources['model_outputs']['known_bytes_sum']} B；中间已知 {resources['intermediate_activations']['known_bytes_sum']} B；不是峰值内存/BPU/DDR 分配。")
+        print(f"优化候选/信息不足观察：{data['optimization_candidates']['summary']['counts_by_classification']}；未改写模型。")
         for warning in data['unverified_assumptions']:
             print('注意：' + display(warning))
         print('尚未用实际工具链验证。详情：inspect --analysis <analysis.json> --node <节点 ID>')
         return 0
-    except (ValueError, OSError, RuntimeError, KeyError, TypeError) as exc:
-        print(f'错误：{exc}', file=sys.stderr)
+    except (ValueError, OSError, RuntimeError, KeyError, TypeError, StopIteration) as exc:
+        print(f'错误：{display(exc)}', file=sys.stderr)
         return 2
 
 if __name__ == '__main__':
