@@ -6,12 +6,21 @@
 
 我希望把这些重复的排查工作交给 AI：**只要告诉 Codex“帮我检查这个 ONNX”，Skill 就能按步骤调用检测工具，必要时查询地平线官方手册，并用中文解释检查结果。**
 
-本项目不是 ONNX 编辑器，也不是一键量化软件。它更像是量化前的“体检助手”：负责发现和解释问题，帮助使用者决定下一步应该核实什么。
+本项目**专门面向地平线 RDK X5（Bayes-e）的 ONNX 量化流程**，不是通用的 ONNX 编辑器，也不是一键量化软件。它更像是量化前的“体检助手”：在模型进入地平线量化工具链之前，先发现和解释可能影响转换的静态问题，帮助使用者决定下一步应该核实什么。
 
 - **交互方式：** Windows VS Code + WSL Ubuntu + Codex 插件；全程使用对话与终端，无网页界面。
 - **当前版本：** Skill V1.4；Python 辅助包 `rdkx5-onnx-doctor` 0.5.0。
-- **硬件目标：** RDK X5（Bayes-e）；当前项目工具链配置以 **ONNX Opset 11** 为准。
+- **硬件与工具链目标：** 地平线 RDK X5（Bayes-e）；本人使用 **OpenExplorer v1.2.8**，当前项目工具链 Profile 按 **ONNX Opset 11** 检查。
 - **基本原则：** 只读 ONNX、有据可查、不把静态预检等同于量化或部署成功。
+
+**我使用的地平线量化工具链：** OpenExplorer v1.2.8，目录/发行包名称为：
+
+```text
+horizon_x5_open_explorer_v1.2.8/
+└── horizon_x5_open_explorer_v1.2.8-py310_20240926/
+```
+
+这是本项目实际使用的量化环境版本信息，不表示 Skill 会直接调用该目录中的量化程序。**OpSet 11 是我当前工具链配置的目标版本**，不代表所有 RDK X5 量化工具链都只支持 Opset 11。
 
 ## 一、这个 Skill 能解决什么问题？
 
@@ -78,11 +87,20 @@ AI 整理证据、解释问题，生成中文结论及本地报告
 
 **Windows 上运行 VS Code → 通过 WSL 扩展打开 Ubuntu 工作区 → 使用 VS Code 的 Codex 插件调用 Skill。**
 
+**为什么使用 Ubuntu 或 WSL？** 因为我的完整 RDK X5 量化工作流需要在 **Ubuntu/Linux 环境中配置并使用地平线 OpenExplorer 的 Docker 量化环境**。我在 Windows 上使用 WSL Ubuntu，是为了同时保留 Windows VS Code + Codex 的操作方式，并让 ONNX 文件、检查脚本与后续 Docker 量化流程处于衔接方便的 Linux 工作环境。使用原生 Ubuntu 也可以。
+
+这里要区分两个阶段：
+
+- **本仓库目前实现的 Skill：** 在 Docker 量化之前读取 ONNX、检查算子和模型结构；**不要求启动 Docker，也不会执行量化**。
+- **后续实际量化阶段：** 在配置好的 Ubuntu Docker / OpenExplorer v1.2.8 环境内执行校准、模型转换等工作；**不属于本 Skill 目前的执行范围**。
+
+因此，选择 Ubuntu/WSL 主要是为了对接实际量化工具链，**不是说 ONNX 静态分析本身必须依赖 Docker**。
+
 需要准备：
 
 - Windows VS Code，能够连接 WSL Ubuntu，并已安装、配置 Codex 插件。
 - WSL Ubuntu 内的 Python **3.10 或更新版本**、Git 和 Python 虚拟环境工具。
-- 一个准备检查的 `.onnx` 文件。**不需要 GPU、RDK X5 开发板、Docker 或已安装的地平线量化工具链**，也可以先完成本项目的静态检查。
+- 一个准备检查的 `.onnx` 文件。**仅运行本 Skill 的静态预检时**，不需要 GPU、RDK X5 开发板、Docker 或已安装的地平线量化工具链。
 
 以下命令均在 **WSL Ubuntu 终端**执行，不是在 Windows PowerShell 中执行。
 
