@@ -1,0 +1,164 @@
+{
+  "node": {
+    "id": "main/node_000280",
+    "original_name": "/model/model.16/Concat_1",
+    "op_type": "Concat",
+    "domain": "",
+    "inputs": [
+      "/model/model.16/Unsqueeze_4_output_0",
+      "/model/model.16/Unsqueeze_5_output_0",
+      "/model/model.16/Unsqueeze_6_output_0",
+      "/model/model.16/Unsqueeze_7_output_0"
+    ],
+    "outputs": [
+      "offset"
+    ],
+    "attributes": {
+      "axis": -1
+    }
+  },
+  "tensors": [
+    {
+      "name": "/model/model.16/Unsqueeze_4_output_0",
+      "shape": [
+        1,
+        1,
+        56,
+        1
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000276",
+      "consumers": [
+        "main/node_000280"
+      ],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/model/model.16/Unsqueeze_5_output_0",
+      "shape": [
+        1,
+        1,
+        56,
+        1
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000277",
+      "consumers": [
+        "main/node_000280"
+      ],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/model/model.16/Unsqueeze_6_output_0",
+      "shape": [
+        1,
+        1,
+        56,
+        1
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000278",
+      "consumers": [
+        "main/node_000280"
+      ],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": false
+    },
+    {
+      "name": "/model/model.16/Unsqueeze_7_output_0",
+      "shape": [
+        1,
+        1,
+        56,
+        1
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000279",
+      "consumers": [
+        "main/node_000280"
+      ],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": false
+    },
+    {
+      "name": "offset",
+      "shape": [
+        1,
+        1,
+        56,
+        4
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000280",
+      "consumers": [],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": true,
+      "is_initializer": false
+    }
+  ],
+  "diagnostic": {
+    "node_id": "main/node_000280",
+    "status": "NOT_COVERED",
+    "results": [],
+    "issues": [],
+    "suggestions": []
+  },
+  "trace": {
+    "node_id": "main/node_000280",
+    "predecessors": [
+      "main/node_000276",
+      "main/node_000277",
+      "main/node_000278",
+      "main/node_000279"
+    ],
+    "successors": [],
+    "upstream_neighbors": [
+      "main/node_000228",
+      "main/node_000242",
+      "main/node_000256",
+      "main/node_000270",
+      "main/node_000276",
+      "main/node_000277",
+      "main/node_000278",
+      "main/node_000279"
+    ],
+    "neighborhood": [
+      "main/node_000228",
+      "main/node_000242",
+      "main/node_000256",
+      "main/node_000270",
+      "main/node_000276",
+      "main/node_000277",
+      "main/node_000278",
+      "main/node_000279",
+      "main/node_000280"
+    ],
+    "downstream_nodes": [],
+    "reachable_outputs": [
+      "offset"
+    ],
+    "representative_paths": [
+      {
+        "output_tensor": "offset",
+        "nodes": [
+          "main/node_000280"
+        ],
+        "edges": []
+      }
+    ],
+    "paths_truncated": false,
+    "path_policy": "每个可达输出仅展示一条 BFS 最短代表路径；其他路径不枚举",
+    "reason": "依赖关系不等于下游违规、CPU 回退或精度下降"
+  }
+}

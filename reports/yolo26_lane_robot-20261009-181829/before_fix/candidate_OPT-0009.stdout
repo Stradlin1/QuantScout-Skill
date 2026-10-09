@@ -1,0 +1,161 @@
+{
+  "pattern": "RESHAPE_NOOP",
+  "node_ids": [
+    "main/node_000268"
+  ],
+  "node_names": [
+    "/model/model.16/task_branches.3/Reshape_1"
+  ],
+  "tensor_names": [
+    "/model/model.16/task_branches.3/Tanh_output_0",
+    "/model/model.16/task_branches.3/Constant_1_output_0",
+    "/model/model.16/task_branches.3/Reshape_1_output_0"
+  ],
+  "classification": "INSUFFICIENT_INFORMATION",
+  "evidence": {
+    "input_shape": [
+      "unk__42",
+      56
+    ],
+    "target_constant": {
+      "status": "KNOWN",
+      "values": [
+        1,
+        1,
+        56
+      ],
+      "shape": [
+        3
+      ],
+      "dtype": "int64",
+      "reason": null,
+      "source": "Constant.value"
+    },
+    "resolved_target": null,
+    "connections": [],
+    "tensor_interfaces": [
+      {
+        "name": "/model/model.16/task_branches.3/Tanh_output_0",
+        "is_graph_input": false,
+        "is_graph_output": false,
+        "producer": "main/node_000266",
+        "consumers": [
+          "main/node_000268"
+        ]
+      },
+      {
+        "name": "/model/model.16/task_branches.3/Constant_1_output_0",
+        "is_graph_input": false,
+        "is_graph_output": false,
+        "producer": "main/node_000267",
+        "consumers": [
+          "main/node_000268"
+        ]
+      },
+      {
+        "name": "/model/model.16/task_branches.3/Reshape_1_output_0",
+        "is_graph_input": false,
+        "is_graph_output": false,
+        "producer": "main/node_000268",
+        "consumers": [
+          "main/node_000270"
+        ]
+      }
+    ]
+  },
+  "explanation": "Reshape near-match only; no no-op has been proven.",
+  "conditions": [
+    "Preserve public input/output names, shapes, dtypes and all consumer connections",
+    "Apply to a separate model copy only after validating all blockers and overlapping candidates"
+  ],
+  "blockers": [
+    "dim[0] symbolic: unk__42"
+  ],
+  "benefit_hint": "Potentially fewer graph operations if retained by the compiler; no measured speed or memory improvement",
+  "verification_needed": [
+    "ONNX checker on a future rewritten copy",
+    "Compare input/output shapes, dtypes and public output names",
+    "ONNX Runtime numerical comparison on representative inputs before any future rewrite; check task metrics where relevant"
+  ],
+  "reachable_outputs": [
+    "offset"
+  ],
+  "reachability_status": "COMPUTED_ON_DEMAND",
+  "overlap_with": [],
+  "source_urls": [
+    "https://onnx.ai/onnx/operators/onnx__Reshape.html"
+  ],
+  "limitations": [
+    "No model rewrite performed",
+    "No compiler fusion, CPU/BPU placement or performance measurement"
+  ],
+  "candidate_id": "OPT-0009",
+  "trace": {
+    "node_id": "main/node_000268",
+    "predecessors": [
+      "main/node_000266",
+      "main/node_000267"
+    ],
+    "successors": [
+      "main/node_000270"
+    ],
+    "upstream_neighbors": [
+      "main/node_000265",
+      "main/node_000266",
+      "main/node_000267"
+    ],
+    "neighborhood": [
+      "main/node_000265",
+      "main/node_000266",
+      "main/node_000267",
+      "main/node_000268",
+      "main/node_000270",
+      "main/node_000279"
+    ],
+    "downstream_nodes": [
+      "main/node_000270",
+      "main/node_000279",
+      "main/node_000280"
+    ],
+    "reachable_outputs": [
+      "offset"
+    ],
+    "representative_paths": [
+      {
+        "output_tensor": "offset",
+        "nodes": [
+          "main/node_000268",
+          "main/node_000270",
+          "main/node_000279",
+          "main/node_000280"
+        ],
+        "edges": [
+          {
+            "source": "main/node_000268",
+            "target": "main/node_000270",
+            "tensors": [
+              "/model/model.16/task_branches.3/Reshape_1_output_0"
+            ]
+          },
+          {
+            "source": "main/node_000270",
+            "target": "main/node_000279",
+            "tensors": [
+              "/model/model.16/task_branches.3/Mul_output_0"
+            ]
+          },
+          {
+            "source": "main/node_000279",
+            "target": "main/node_000280",
+            "tensors": [
+              "/model/model.16/Unsqueeze_7_output_0"
+            ]
+          }
+        ]
+      }
+    ],
+    "paths_truncated": false,
+    "path_policy": "每个可达输出仅展示一条 BFS 最短代表路径；其他路径不枚举",
+    "reason": "依赖关系不等于下游违规、CPU 回退或精度下降"
+  }
+}

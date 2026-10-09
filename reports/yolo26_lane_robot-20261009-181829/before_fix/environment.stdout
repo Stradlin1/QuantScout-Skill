@@ -1,0 +1,21 @@
+annotated-types==0.8.0
+build==1.6.1
+exceptiongroup==1.3.1
+iniconfig==2.3.1
+ml_dtypes==0.6.0
+networkx==3.4.2
+numpy==2.2.6
+onnx==1.23.2
+packaging==26.3
+pluggy==1.6.0
+protobuf==7.36.2
+pydantic==2.14.0
+pydantic_core==2.50.0
+Pygments==2.21.0
+pyproject_hooks==1.3.3
+pytest==8.4.2
+PyYAML==6.0.3
+-e git+ssh://git@github.com/Stradlin1/skillzuoye.git@c10ac2ac7d672716e95c4b8b6e264048b5d6b4ec#egg=rdkx5_onnx_doctor
+tomli==2.5.0
+typing-inspection==0.4.4
+typing_extensions==4.16.0

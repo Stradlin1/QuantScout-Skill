@@ -1,0 +1,49 @@
+FF.                                                                      [100%]
+=================================== FAILURES ===================================
+_ test_symbolic_reshape_uses_known_shape_to_exclude_non_noop[shape0-target0-False] _
+
+graph = <function graph.<locals>.make at 0x7521dcd34f70>, shape = ['batch', 6]
+target = [1, 2, 3], expected = False
+
+    @pytest.mark.parametrize('shape,target,expected', [
+        (['batch', 6], [1, 2, 3], False),
+        (['batch', 512, 'height', 'width'], [1, 4, 128, 400], False),
+        (['batch', 6], [1, 6], True),
+    ])
+    def test_symbolic_reshape_uses_known_shape_to_exclude_non_noop(graph, shape, target, expected):
+        init = numpy_helper.from_array(np.array(target, np.int64), name='target')
+        ir = graph([h.make_node('Reshape', ['x', 'target'], ['y'])],
+                   shape=shape, initializers=[init],
+                   outputs=[h.make_tensor_value_info('y', T.FLOAT, target)])
+        cs = candidates(ir, 'RESHAPE_NOOP')
+>       assert bool(cs) == expected
+E       AssertionError: assert True == False
+E        +  where True = bool([{'benefit_hint': 'Potentially fewer graph operations if retained by the compiler; no measured speed or memory improve...output must retain name/interface: y'], 'candidate_id': 'OPT-0001', 'classification': 'INSUFFICIENT_INFORMATION', ...}])
+
+tests/test_optimization_candidates.py:224: AssertionError
+_ test_symbolic_reshape_uses_known_shape_to_exclude_non_noop[shape1-target1-False] _
+
+graph = <function graph.<locals>.make at 0x7521dcd35000>
+shape = ['batch', 512, 'height', 'width'], target = [1, 4, 128, 400]
+expected = False
+
+    @pytest.mark.parametrize('shape,target,expected', [
+        (['batch', 6], [1, 2, 3], False),
+        (['batch', 512, 'height', 'width'], [1, 4, 128, 400], False),
+        (['batch', 6], [1, 6], True),
+    ])
+    def test_symbolic_reshape_uses_known_shape_to_exclude_non_noop(graph, shape, target, expected):
+        init = numpy_helper.from_array(np.array(target, np.int64), name='target')
+        ir = graph([h.make_node('Reshape', ['x', 'target'], ['y'])],
+                   shape=shape, initializers=[init],
+                   outputs=[h.make_tensor_value_info('y', T.FLOAT, target)])
+        cs = candidates(ir, 'RESHAPE_NOOP')
+>       assert bool(cs) == expected
+E       AssertionError: assert True == False
+E        +  where True = bool([{'benefit_hint': 'Potentially fewer graph operations if retained by the compiler; no measured speed or memory improve...output must retain name/interface: y'], 'candidate_id': 'OPT-0001', 'classification': 'INSUFFICIENT_INFORMATION', ...}])
+
+tests/test_optimization_candidates.py:224: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_optimization_candidates.py::test_symbolic_reshape_uses_known_shape_to_exclude_non_noop[shape0-target0-False]
+FAILED tests/test_optimization_candidates.py::test_symbolic_reshape_uses_known_shape_to_exclude_non_noop[shape1-target1-False]
+2 failed, 1 passed, 41 deselected in 0.04s

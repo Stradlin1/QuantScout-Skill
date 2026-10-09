@@ -1,0 +1,47 @@
+{
+  "node_id": "main/node_000275",
+  "predecessors": [
+    "main/node_000271",
+    "main/node_000272",
+    "main/node_000273",
+    "main/node_000274"
+  ],
+  "successors": [],
+  "upstream_neighbors": [
+    "main/node_000222",
+    "main/node_000236",
+    "main/node_000250",
+    "main/node_000264",
+    "main/node_000271",
+    "main/node_000272",
+    "main/node_000273",
+    "main/node_000274"
+  ],
+  "neighborhood": [
+    "main/node_000222",
+    "main/node_000236",
+    "main/node_000250",
+    "main/node_000264",
+    "main/node_000271",
+    "main/node_000272",
+    "main/node_000273",
+    "main/node_000274",
+    "main/node_000275"
+  ],
+  "downstream_nodes": [],
+  "reachable_outputs": [
+    "cls_logits"
+  ],
+  "representative_paths": [
+    {
+      "output_tensor": "cls_logits",
+      "nodes": [
+        "main/node_000275"
+      ],
+      "edges": []
+    }
+  ],
+  "paths_truncated": false,
+  "path_policy": "每个可达输出仅展示一条 BFS 最短代表路径；其他路径不枚举",
+  "reason": "依赖关系不等于下游违规、CPU 回退或精度下降"
+}

@@ -1,0 +1,5 @@
+分析完成：/home/xhm/lianghua_ws/skillzuoye/reports/yolo26_lane_robot-20261009-181829
+Conv 状态：{'NO_VIOLATION_FOUND': 47}
+Tensor 理论原始载荷：输出已知 145152 B；中间已知 93475488 B；不是峰值内存/BPU/DDR 分配。
+优化候选/信息不足观察：{'INSUFFICIENT_INFORMATION': 9}；未改写模型。
+尚未用实际工具链验证。详情：inspect --analysis <analysis.json> --node <节点 ID>

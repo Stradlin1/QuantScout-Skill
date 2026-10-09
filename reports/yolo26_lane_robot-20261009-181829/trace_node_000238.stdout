@@ -1,0 +1,74 @@
+{
+  "node_id": "main/node_000238",
+  "predecessors": [
+    "main/node_000237"
+  ],
+  "successors": [
+    "main/node_000240"
+  ],
+  "upstream_neighbors": [
+    "main/node_000233",
+    "main/node_000237"
+  ],
+  "neighborhood": [
+    "main/node_000233",
+    "main/node_000237",
+    "main/node_000238",
+    "main/node_000240",
+    "main/node_000242"
+  ],
+  "downstream_nodes": [
+    "main/node_000240",
+    "main/node_000242",
+    "main/node_000277",
+    "main/node_000280"
+  ],
+  "reachable_outputs": [
+    "offset"
+  ],
+  "representative_paths": [
+    {
+      "output_tensor": "offset",
+      "nodes": [
+        "main/node_000238",
+        "main/node_000240",
+        "main/node_000242",
+        "main/node_000277",
+        "main/node_000280"
+      ],
+      "edges": [
+        {
+          "source": "main/node_000238",
+          "target": "main/node_000240",
+          "tensors": [
+            "/model/model.16/task_branches.1/Tanh_output_0"
+          ]
+        },
+        {
+          "source": "main/node_000240",
+          "target": "main/node_000242",
+          "tensors": [
+            "/model/model.16/task_branches.1/Reshape_1_output_0"
+          ]
+        },
+        {
+          "source": "main/node_000242",
+          "target": "main/node_000277",
+          "tensors": [
+            "/model/model.16/task_branches.1/Mul_output_0"
+          ]
+        },
+        {
+          "source": "main/node_000277",
+          "target": "main/node_000280",
+          "tensors": [
+            "/model/model.16/Unsqueeze_5_output_0"
+          ]
+        }
+      ]
+    }
+  ],
+  "paths_truncated": false,
+  "path_policy": "每个可达输出仅展示一条 BFS 最短代表路径；其他路径不枚举",
+  "reason": "依赖关系不等于下游违规、CPU 回退或精度下降"
+}

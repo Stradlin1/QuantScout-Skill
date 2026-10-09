@@ -1,0 +1,33 @@
+{
+  "name": "/model/model.1/act/Sigmoid_output_0",
+  "resource_category": "intermediate_activation",
+  "shape": [
+    1,
+    64,
+    160,
+    160
+  ],
+  "dtype": "float32",
+  "storage_kind": "dense",
+  "element_count": 1638400,
+  "element_size_bytes": 4,
+  "raw_bytes": 6553600,
+  "mib": 6.25,
+  "mb": 6.5536,
+  "hypothetical_int8_bytes": 1638400,
+  "size_status": "KNOWN",
+  "shape_status": "KNOWN",
+  "dtype_status": "KNOWN",
+  "unknown_reason": null,
+  "producer_node_id": "main/node_000004",
+  "consumer_node_ids": [
+    "main/node_000005"
+  ],
+  "consumer_count": 1,
+  "shared_by_multiple_consumers": false,
+  "is_graph_output": false,
+  "is_graph_input": false,
+  "is_initializer": false,
+  "original_kind": "intermediate",
+  "classification_note": null
+}

@@ -1,0 +1,824 @@
+[
+  {
+    "pattern": "RESHAPE_NOOP",
+    "node_ids": [
+      "main/node_000176"
+    ],
+    "node_names": [
+      "/model/model.10/m/m.0/attn/Reshape"
+    ],
+    "tensor_names": [
+      "/model/model.10/m/m.0/attn/qkv/conv/Conv_output_0",
+      "/model/model.10/m/m.0/attn/Constant_output_0",
+      "/model/model.10/m/m.0/attn/Reshape_output_0"
+    ],
+    "classification": "INSUFFICIENT_INFORMATION",
+    "evidence": {
+      "input_shape": [
+        "unk__75",
+        512,
+        "unk__118",
+        "unk__119"
+      ],
+      "target_constant": {
+        "status": "KNOWN",
+        "values": [
+          1,
+          4,
+          128,
+          400
+        ],
+        "shape": [
+          4
+        ],
+        "dtype": "int64",
+        "reason": null,
+        "source": "Constant.value"
+      },
+      "resolved_target": null,
+      "connections": [],
+      "tensor_interfaces": [
+        {
+          "name": "/model/model.10/m/m.0/attn/qkv/conv/Conv_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000174",
+          "consumers": [
+            "main/node_000176"
+          ]
+        },
+        {
+          "name": "/model/model.10/m/m.0/attn/Constant_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000175",
+          "consumers": [
+            "main/node_000176"
+          ]
+        },
+        {
+          "name": "/model/model.10/m/m.0/attn/Reshape_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000176",
+          "consumers": [
+            "main/node_000177"
+          ]
+        }
+      ]
+    },
+    "explanation": "Reshape near-match only; no no-op has been proven.",
+    "conditions": [
+      "Preserve public input/output names, shapes, dtypes and all consumer connections",
+      "Apply to a separate model copy only after validating all blockers and overlapping candidates"
+    ],
+    "blockers": [
+      "dim[0] symbolic: unk__75; dim[2] symbolic: unk__118; dim[3] symbolic: unk__119"
+    ],
+    "benefit_hint": "Potentially fewer graph operations if retained by the compiler; no measured speed or memory improvement",
+    "verification_needed": [
+      "ONNX checker on a future rewritten copy",
+      "Compare input/output shapes, dtypes and public output names",
+      "ONNX Runtime numerical comparison on representative inputs before any future rewrite; check task metrics where relevant"
+    ],
+    "reachable_outputs": null,
+    "reachability_status": "ON_DEMAND",
+    "overlap_with": [],
+    "source_urls": [
+      "https://onnx.ai/onnx/operators/onnx__Reshape.html"
+    ],
+    "limitations": [
+      "No model rewrite performed",
+      "No compiler fusion, CPU/BPU placement or performance measurement"
+    ],
+    "candidate_id": "OPT-0001"
+  },
+  {
+    "pattern": "RESHAPE_NOOP",
+    "node_ids": [
+      "main/node_000222"
+    ],
+    "node_names": [
+      "/model/model.16/task_branches.0/Reshape"
+    ],
+    "tensor_names": [
+      "/model/model.16/task_branches.0/cls_fc2/Gemm_output_0",
+      "/model/model.16/task_branches.0/Constant_output_0",
+      "/model/model.16/task_branches.0/Reshape_output_0"
+    ],
+    "classification": "INSUFFICIENT_INFORMATION",
+    "evidence": {
+      "input_shape": [
+        "unk__42",
+        9016
+      ],
+      "target_constant": {
+        "status": "KNOWN",
+        "values": [
+          1,
+          161,
+          56
+        ],
+        "shape": [
+          3
+        ],
+        "dtype": "int64",
+        "reason": null,
+        "source": "Constant.value"
+      },
+      "resolved_target": null,
+      "connections": [],
+      "tensor_interfaces": [
+        {
+          "name": "/model/model.16/task_branches.0/cls_fc2/Gemm_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000220",
+          "consumers": [
+            "main/node_000222"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.0/Constant_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000221",
+          "consumers": [
+            "main/node_000222"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.0/Reshape_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000222",
+          "consumers": [
+            "main/node_000271"
+          ]
+        }
+      ]
+    },
+    "explanation": "Reshape near-match only; no no-op has been proven.",
+    "conditions": [
+      "Preserve public input/output names, shapes, dtypes and all consumer connections",
+      "Apply to a separate model copy only after validating all blockers and overlapping candidates"
+    ],
+    "blockers": [
+      "dim[0] symbolic: unk__42"
+    ],
+    "benefit_hint": "Potentially fewer graph operations if retained by the compiler; no measured speed or memory improvement",
+    "verification_needed": [
+      "ONNX checker on a future rewritten copy",
+      "Compare input/output shapes, dtypes and public output names",
+      "ONNX Runtime numerical comparison on representative inputs before any future rewrite; check task metrics where relevant"
+    ],
+    "reachable_outputs": null,
+    "reachability_status": "ON_DEMAND",
+    "overlap_with": [],
+    "source_urls": [
+      "https://onnx.ai/onnx/operators/onnx__Reshape.html"
+    ],
+    "limitations": [
+      "No model rewrite performed",
+      "No compiler fusion, CPU/BPU placement or performance measurement"
+    ],
+    "candidate_id": "OPT-0002"
+  },
+  {
+    "pattern": "RESHAPE_NOOP",
+    "node_ids": [
+      "main/node_000226"
+    ],
+    "node_names": [
+      "/model/model.16/task_branches.0/Reshape_1"
+    ],
+    "tensor_names": [
+      "/model/model.16/task_branches.0/Tanh_output_0",
+      "/model/model.16/task_branches.0/Constant_1_output_0",
+      "/model/model.16/task_branches.0/Reshape_1_output_0"
+    ],
+    "classification": "INSUFFICIENT_INFORMATION",
+    "evidence": {
+      "input_shape": [
+        "unk__42",
+        56
+      ],
+      "target_constant": {
+        "status": "KNOWN",
+        "values": [
+          1,
+          1,
+          56
+        ],
+        "shape": [
+          3
+        ],
+        "dtype": "int64",
+        "reason": null,
+        "source": "Constant.value"
+      },
+      "resolved_target": null,
+      "connections": [],
+      "tensor_interfaces": [
+        {
+          "name": "/model/model.16/task_branches.0/Tanh_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000224",
+          "consumers": [
+            "main/node_000226"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.0/Constant_1_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000225",
+          "consumers": [
+            "main/node_000226"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.0/Reshape_1_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000226",
+          "consumers": [
+            "main/node_000228"
+          ]
+        }
+      ]
+    },
+    "explanation": "Reshape near-match only; no no-op has been proven.",
+    "conditions": [
+      "Preserve public input/output names, shapes, dtypes and all consumer connections",
+      "Apply to a separate model copy only after validating all blockers and overlapping candidates"
+    ],
+    "blockers": [
+      "dim[0] symbolic: unk__42"
+    ],
+    "benefit_hint": "Potentially fewer graph operations if retained by the compiler; no measured speed or memory improvement",
+    "verification_needed": [
+      "ONNX checker on a future rewritten copy",
+      "Compare input/output shapes, dtypes and public output names",
+      "ONNX Runtime numerical comparison on representative inputs before any future rewrite; check task metrics where relevant"
+    ],
+    "reachable_outputs": null,
+    "reachability_status": "ON_DEMAND",
+    "overlap_with": [],
+    "source_urls": [
+      "https://onnx.ai/onnx/operators/onnx__Reshape.html"
+    ],
+    "limitations": [
+      "No model rewrite performed",
+      "No compiler fusion, CPU/BPU placement or performance measurement"
+    ],
+    "candidate_id": "OPT-0003"
+  },
+  {
+    "pattern": "RESHAPE_NOOP",
+    "node_ids": [
+      "main/node_000236"
+    ],
+    "node_names": [
+      "/model/model.16/task_branches.1/Reshape"
+    ],
+    "tensor_names": [
+      "/model/model.16/task_branches.1/cls_fc2/Gemm_output_0",
+      "/model/model.16/task_branches.1/Constant_output_0",
+      "/model/model.16/task_branches.1/Reshape_output_0"
+    ],
+    "classification": "INSUFFICIENT_INFORMATION",
+    "evidence": {
+      "input_shape": [
+        "unk__42",
+        9016
+      ],
+      "target_constant": {
+        "status": "KNOWN",
+        "values": [
+          1,
+          161,
+          56
+        ],
+        "shape": [
+          3
+        ],
+        "dtype": "int64",
+        "reason": null,
+        "source": "Constant.value"
+      },
+      "resolved_target": null,
+      "connections": [],
+      "tensor_interfaces": [
+        {
+          "name": "/model/model.16/task_branches.1/cls_fc2/Gemm_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000234",
+          "consumers": [
+            "main/node_000236"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.1/Constant_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000235",
+          "consumers": [
+            "main/node_000236"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.1/Reshape_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000236",
+          "consumers": [
+            "main/node_000272"
+          ]
+        }
+      ]
+    },
+    "explanation": "Reshape near-match only; no no-op has been proven.",
+    "conditions": [
+      "Preserve public input/output names, shapes, dtypes and all consumer connections",
+      "Apply to a separate model copy only after validating all blockers and overlapping candidates"
+    ],
+    "blockers": [
+      "dim[0] symbolic: unk__42"
+    ],
+    "benefit_hint": "Potentially fewer graph operations if retained by the compiler; no measured speed or memory improvement",
+    "verification_needed": [
+      "ONNX checker on a future rewritten copy",
+      "Compare input/output shapes, dtypes and public output names",
+      "ONNX Runtime numerical comparison on representative inputs before any future rewrite; check task metrics where relevant"
+    ],
+    "reachable_outputs": null,
+    "reachability_status": "ON_DEMAND",
+    "overlap_with": [],
+    "source_urls": [
+      "https://onnx.ai/onnx/operators/onnx__Reshape.html"
+    ],
+    "limitations": [
+      "No model rewrite performed",
+      "No compiler fusion, CPU/BPU placement or performance measurement"
+    ],
+    "candidate_id": "OPT-0004"
+  },
+  {
+    "pattern": "RESHAPE_NOOP",
+    "node_ids": [
+      "main/node_000240"
+    ],
+    "node_names": [
+      "/model/model.16/task_branches.1/Reshape_1"
+    ],
+    "tensor_names": [
+      "/model/model.16/task_branches.1/Tanh_output_0",
+      "/model/model.16/task_branches.1/Constant_1_output_0",
+      "/model/model.16/task_branches.1/Reshape_1_output_0"
+    ],
+    "classification": "INSUFFICIENT_INFORMATION",
+    "evidence": {
+      "input_shape": [
+        "unk__42",
+        56
+      ],
+      "target_constant": {
+        "status": "KNOWN",
+        "values": [
+          1,
+          1,
+          56
+        ],
+        "shape": [
+          3
+        ],
+        "dtype": "int64",
+        "reason": null,
+        "source": "Constant.value"
+      },
+      "resolved_target": null,
+      "connections": [],
+      "tensor_interfaces": [
+        {
+          "name": "/model/model.16/task_branches.1/Tanh_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000238",
+          "consumers": [
+            "main/node_000240"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.1/Constant_1_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000239",
+          "consumers": [
+            "main/node_000240"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.1/Reshape_1_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000240",
+          "consumers": [
+            "main/node_000242"
+          ]
+        }
+      ]
+    },
+    "explanation": "Reshape near-match only; no no-op has been proven.",
+    "conditions": [
+      "Preserve public input/output names, shapes, dtypes and all consumer connections",
+      "Apply to a separate model copy only after validating all blockers and overlapping candidates"
+    ],
+    "blockers": [
+      "dim[0] symbolic: unk__42"
+    ],
+    "benefit_hint": "Potentially fewer graph operations if retained by the compiler; no measured speed or memory improvement",
+    "verification_needed": [
+      "ONNX checker on a future rewritten copy",
+      "Compare input/output shapes, dtypes and public output names",
+      "ONNX Runtime numerical comparison on representative inputs before any future rewrite; check task metrics where relevant"
+    ],
+    "reachable_outputs": null,
+    "reachability_status": "ON_DEMAND",
+    "overlap_with": [],
+    "source_urls": [
+      "https://onnx.ai/onnx/operators/onnx__Reshape.html"
+    ],
+    "limitations": [
+      "No model rewrite performed",
+      "No compiler fusion, CPU/BPU placement or performance measurement"
+    ],
+    "candidate_id": "OPT-0005"
+  },
+  {
+    "pattern": "RESHAPE_NOOP",
+    "node_ids": [
+      "main/node_000250"
+    ],
+    "node_names": [
+      "/model/model.16/task_branches.2/Reshape"
+    ],
+    "tensor_names": [
+      "/model/model.16/task_branches.2/cls_fc2/Gemm_output_0",
+      "/model/model.16/task_branches.2/Constant_output_0",
+      "/model/model.16/task_branches.2/Reshape_output_0"
+    ],
+    "classification": "INSUFFICIENT_INFORMATION",
+    "evidence": {
+      "input_shape": [
+        "unk__42",
+        9016
+      ],
+      "target_constant": {
+        "status": "KNOWN",
+        "values": [
+          1,
+          161,
+          56
+        ],
+        "shape": [
+          3
+        ],
+        "dtype": "int64",
+        "reason": null,
+        "source": "Constant.value"
+      },
+      "resolved_target": null,
+      "connections": [],
+      "tensor_interfaces": [
+        {
+          "name": "/model/model.16/task_branches.2/cls_fc2/Gemm_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000248",
+          "consumers": [
+            "main/node_000250"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.2/Constant_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000249",
+          "consumers": [
+            "main/node_000250"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.2/Reshape_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000250",
+          "consumers": [
+            "main/node_000273"
+          ]
+        }
+      ]
+    },
+    "explanation": "Reshape near-match only; no no-op has been proven.",
+    "conditions": [
+      "Preserve public input/output names, shapes, dtypes and all consumer connections",
+      "Apply to a separate model copy only after validating all blockers and overlapping candidates"
+    ],
+    "blockers": [
+      "dim[0] symbolic: unk__42"
+    ],
+    "benefit_hint": "Potentially fewer graph operations if retained by the compiler; no measured speed or memory improvement",
+    "verification_needed": [
+      "ONNX checker on a future rewritten copy",
+      "Compare input/output shapes, dtypes and public output names",
+      "ONNX Runtime numerical comparison on representative inputs before any future rewrite; check task metrics where relevant"
+    ],
+    "reachable_outputs": null,
+    "reachability_status": "ON_DEMAND",
+    "overlap_with": [],
+    "source_urls": [
+      "https://onnx.ai/onnx/operators/onnx__Reshape.html"
+    ],
+    "limitations": [
+      "No model rewrite performed",
+      "No compiler fusion, CPU/BPU placement or performance measurement"
+    ],
+    "candidate_id": "OPT-0006"
+  },
+  {
+    "pattern": "RESHAPE_NOOP",
+    "node_ids": [
+      "main/node_000254"
+    ],
+    "node_names": [
+      "/model/model.16/task_branches.2/Reshape_1"
+    ],
+    "tensor_names": [
+      "/model/model.16/task_branches.2/Tanh_output_0",
+      "/model/model.16/task_branches.2/Constant_1_output_0",
+      "/model/model.16/task_branches.2/Reshape_1_output_0"
+    ],
+    "classification": "INSUFFICIENT_INFORMATION",
+    "evidence": {
+      "input_shape": [
+        "unk__42",
+        56
+      ],
+      "target_constant": {
+        "status": "KNOWN",
+        "values": [
+          1,
+          1,
+          56
+        ],
+        "shape": [
+          3
+        ],
+        "dtype": "int64",
+        "reason": null,
+        "source": "Constant.value"
+      },
+      "resolved_target": null,
+      "connections": [],
+      "tensor_interfaces": [
+        {
+          "name": "/model/model.16/task_branches.2/Tanh_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000252",
+          "consumers": [
+            "main/node_000254"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.2/Constant_1_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000253",
+          "consumers": [
+            "main/node_000254"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.2/Reshape_1_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000254",
+          "consumers": [
+            "main/node_000256"
+          ]
+        }
+      ]
+    },
+    "explanation": "Reshape near-match only; no no-op has been proven.",
+    "conditions": [
+      "Preserve public input/output names, shapes, dtypes and all consumer connections",
+      "Apply to a separate model copy only after validating all blockers and overlapping candidates"
+    ],
+    "blockers": [
+      "dim[0] symbolic: unk__42"
+    ],
+    "benefit_hint": "Potentially fewer graph operations if retained by the compiler; no measured speed or memory improvement",
+    "verification_needed": [
+      "ONNX checker on a future rewritten copy",
+      "Compare input/output shapes, dtypes and public output names",
+      "ONNX Runtime numerical comparison on representative inputs before any future rewrite; check task metrics where relevant"
+    ],
+    "reachable_outputs": null,
+    "reachability_status": "ON_DEMAND",
+    "overlap_with": [],
+    "source_urls": [
+      "https://onnx.ai/onnx/operators/onnx__Reshape.html"
+    ],
+    "limitations": [
+      "No model rewrite performed",
+      "No compiler fusion, CPU/BPU placement or performance measurement"
+    ],
+    "candidate_id": "OPT-0007"
+  },
+  {
+    "pattern": "RESHAPE_NOOP",
+    "node_ids": [
+      "main/node_000264"
+    ],
+    "node_names": [
+      "/model/model.16/task_branches.3/Reshape"
+    ],
+    "tensor_names": [
+      "/model/model.16/task_branches.3/cls_fc2/Gemm_output_0",
+      "/model/model.16/task_branches.3/Constant_output_0",
+      "/model/model.16/task_branches.3/Reshape_output_0"
+    ],
+    "classification": "INSUFFICIENT_INFORMATION",
+    "evidence": {
+      "input_shape": [
+        "unk__42",
+        9016
+      ],
+      "target_constant": {
+        "status": "KNOWN",
+        "values": [
+          1,
+          161,
+          56
+        ],
+        "shape": [
+          3
+        ],
+        "dtype": "int64",
+        "reason": null,
+        "source": "Constant.value"
+      },
+      "resolved_target": null,
+      "connections": [],
+      "tensor_interfaces": [
+        {
+          "name": "/model/model.16/task_branches.3/cls_fc2/Gemm_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000262",
+          "consumers": [
+            "main/node_000264"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.3/Constant_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000263",
+          "consumers": [
+            "main/node_000264"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.3/Reshape_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000264",
+          "consumers": [
+            "main/node_000274"
+          ]
+        }
+      ]
+    },
+    "explanation": "Reshape near-match only; no no-op has been proven.",
+    "conditions": [
+      "Preserve public input/output names, shapes, dtypes and all consumer connections",
+      "Apply to a separate model copy only after validating all blockers and overlapping candidates"
+    ],
+    "blockers": [
+      "dim[0] symbolic: unk__42"
+    ],
+    "benefit_hint": "Potentially fewer graph operations if retained by the compiler; no measured speed or memory improvement",
+    "verification_needed": [
+      "ONNX checker on a future rewritten copy",
+      "Compare input/output shapes, dtypes and public output names",
+      "ONNX Runtime numerical comparison on representative inputs before any future rewrite; check task metrics where relevant"
+    ],
+    "reachable_outputs": null,
+    "reachability_status": "ON_DEMAND",
+    "overlap_with": [],
+    "source_urls": [
+      "https://onnx.ai/onnx/operators/onnx__Reshape.html"
+    ],
+    "limitations": [
+      "No model rewrite performed",
+      "No compiler fusion, CPU/BPU placement or performance measurement"
+    ],
+    "candidate_id": "OPT-0008"
+  },
+  {
+    "pattern": "RESHAPE_NOOP",
+    "node_ids": [
+      "main/node_000268"
+    ],
+    "node_names": [
+      "/model/model.16/task_branches.3/Reshape_1"
+    ],
+    "tensor_names": [
+      "/model/model.16/task_branches.3/Tanh_output_0",
+      "/model/model.16/task_branches.3/Constant_1_output_0",
+      "/model/model.16/task_branches.3/Reshape_1_output_0"
+    ],
+    "classification": "INSUFFICIENT_INFORMATION",
+    "evidence": {
+      "input_shape": [
+        "unk__42",
+        56
+      ],
+      "target_constant": {
+        "status": "KNOWN",
+        "values": [
+          1,
+          1,
+          56
+        ],
+        "shape": [
+          3
+        ],
+        "dtype": "int64",
+        "reason": null,
+        "source": "Constant.value"
+      },
+      "resolved_target": null,
+      "connections": [],
+      "tensor_interfaces": [
+        {
+          "name": "/model/model.16/task_branches.3/Tanh_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000266",
+          "consumers": [
+            "main/node_000268"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.3/Constant_1_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000267",
+          "consumers": [
+            "main/node_000268"
+          ]
+        },
+        {
+          "name": "/model/model.16/task_branches.3/Reshape_1_output_0",
+          "is_graph_input": false,
+          "is_graph_output": false,
+          "producer": "main/node_000268",
+          "consumers": [
+            "main/node_000270"
+          ]
+        }
+      ]
+    },
+    "explanation": "Reshape near-match only; no no-op has been proven.",
+    "conditions": [
+      "Preserve public input/output names, shapes, dtypes and all consumer connections",
+      "Apply to a separate model copy only after validating all blockers and overlapping candidates"
+    ],
+    "blockers": [
+      "dim[0] symbolic: unk__42"
+    ],
+    "benefit_hint": "Potentially fewer graph operations if retained by the compiler; no measured speed or memory improvement",
+    "verification_needed": [
+      "ONNX checker on a future rewritten copy",
+      "Compare input/output shapes, dtypes and public output names",
+      "ONNX Runtime numerical comparison on representative inputs before any future rewrite; check task metrics where relevant"
+    ],
+    "reachable_outputs": null,
+    "reachability_status": "ON_DEMAND",
+    "overlap_with": [],
+    "source_urls": [
+      "https://onnx.ai/onnx/operators/onnx__Reshape.html"
+    ],
+    "limitations": [
+      "No model rewrite performed",
+      "No compiler fusion, CPU/BPU placement or performance measurement"
+    ],
+    "candidate_id": "OPT-0009"
+  }
+]
