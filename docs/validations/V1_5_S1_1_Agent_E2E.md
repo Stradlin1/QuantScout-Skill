@@ -39,3 +39,13 @@ E06 的 analyze 调用封装在 Python subprocess argv 中，不能仅搜索终�
 
 GitHub Actions 已配置 Python 3.10/3.12 离线确定性测试及构建，本地 Python 3.10 流程执行通过。
 远程工作流未推送触发：**NOT_RUN**；本机没有 Python 3.12，该矩阵项本地 **NOT_EXECUTED**。未自动 commit、push 或创建 PR。
+
+
+## 推送后 GitHub Actions 状态补充（2026-10-10）
+
+上文“远程工作流未推送触发：NOT_RUN”是**开发结束、尚未提交时**的历史记录。提交 `60b81f55edce40c461e44e43e41af727dfa7990b` 推送后，GitHub Actions 实际运行了 [Python CI #1](https://github.com/Stradlin1/QuantScout-Skill/actions/runs/38021157135)，最终 **SUCCESS**：
+
+- Python **3.10** 作业：成功；安装、CLI help、规则校验、离线 pytest、构建步骤均成功。
+- Python **3.12** 作业：成功；同样步骤均成功。
+- 本次 CI 只验证离线确定性 Python 逻辑，并未重新运行真实 Codex E2E，会话的 10 PASS / 1 FAIL 记录不变。
+- 后续新提交会触发新的工作流；本节只对应上述代码基线，不预判未来提交的 CI 状态。
