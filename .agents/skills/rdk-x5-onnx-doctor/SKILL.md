@@ -1,9 +1,9 @@
 ---
 name: rdk-x5-onnx-doctor
-description: 用自然语言发起 RDK X5 ONNX 量化前静态预检、当前工具链 Opset 准入、节点约束解释、未知算子的官方手册查证，或只总结检查事实（summary_only）、单独查询 Shape、理论资源及优化候选。只读模型，不执行量化或部署。
+description: 用自然语言发起 RDK X5 ONNX 量化前静态预检、当前工具链 Opset 准入、节点约束解释、未知算子的官方手册查证，或简短总结、只看异常、仅描述输入输出（summary_only，不分析和建议）、单独查询 Shape、理论资源及优化候选。只读模型，不执行量化或部署。
 ---
 
-# RDK X5 ONNX Doctor V1.5-S1
+# RDK X5 ONNX Doctor V1.5-S1.1
 
 这是 Agent 工作流；Python CLI 提供离线确定性事实，官网提供独立知识证据。
 执行用户授权的分析，不把一次 analyze 成功作为完整预检完成。
@@ -17,7 +17,9 @@ CLI 不在当前环境时按仓库 README 安装；移植时安装此 Python 包
 
 | 意图 | 执行与结束条件 |
 |---|---|
-| summary_only：只总结、不要分析和建议 | 读取 [事实总结契约](references/summary_only_contract.md)；已有 JSON → summary；只有 ONNX → 新目录 analyze → summary；保存 summary.md 后结束，不联网、不追踪、不输出建议 |
+| summary_only：简短总结，只要事实 | overview；读取 [事实总结契约](references/summary_only_contract.md)，已有 JSON → summary-facts → 当前 Agent 组织中文草稿 → summary-publish；安全发布后结束 |
+| summary_only：只列出异常 | anomalies；同上，FAIL/待验证/未覆盖分别记录，不冒充同一种异常 |
+| summary_only：只看输入输出 | io；同上，仅已有 graph I/O name/Shape/dtype，保留原顺序和未知项 |
 | 完整量化前预检 | analyze → preflight → 异常/覆盖 → 证据驱动的节点查询 → 按需官方查询 → 分层中文结论 |
 | 只问 Opset | 复用报告元信息执行 preflight；没有报告时只读 analyze 获取，版本明确即结束 |
 | 已收录 Mul/Conv 等具体节点 | inspect，路径问题才 trace；引用逐规则 actual/expected/来源，不反复联网 |
@@ -26,6 +28,11 @@ CLI 不在当前环境时按仓库 README 安装；移植时安装此 Python 包
 | 优化方向 | candidates/candidate，再 inspect/trace；信息不足不称冗余，不生成训练补丁 |
 
 只加载本次需要的参考文件；深度调查读 [诊断决策树](references/diagnosis_decision_tree.md)，非 summary_only 回复前读 [答复契约](references/answer_contract.md)。summary_only 仅采用其独立契约，聊天也不得附加建议。
+
+summary_only 只有 ONNX 时先在新目录 analyze 一次；已有 JSON 不重新分析，不联网、不追踪、不查候选。
+summary_only 开始先检查目标是否存在或为符号链接；存在即停止并说明未覆盖。“写入已有 summary.md”不等于明确覆盖授权。
+不得用临时文件再复制、重命名、replace、unlink 或 write_text 绕过发布器。默认分支只独占新建，既有文件保护优先于完成写入。
+不调用旧 summary 代替 Agent 撰写；旧命令仅确定性 fallback。仅统计主图节点，嵌套子图未展开、不计入逐节点统计。
 
 ## 完整预检
 

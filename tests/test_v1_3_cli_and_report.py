@@ -9,7 +9,7 @@ from test_static_shape_propagation import chain
 
 @pytest.mark.parametrize('schema',['1.0','1.1','1.2'])
 def test_legacy_shape_error_and_old_queries(schema,tmp_path,capsys):
-    p=Path(__file__).parents[1]/'examples/demo-report/analysis.json'
+    p=Path(__file__).parents[1]/'examples/legacy-demo-report/analysis.json'
     data=json.loads(p.read_text());data['schema_version']=schema
     q=tmp_path/'legacy.json';q.write_text(json.dumps(data))
     assert main(['nodes','--analysis',str(q),'--json'])==0;capsys.readouterr()

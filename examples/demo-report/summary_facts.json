@@ -1,0 +1,181 @@
+{
+  "summary_facts_schema_version": "1.0",
+  "source_analysis_schema": "1.3",
+  "analysis_sha256": "e8205118722136df1de071a4144f63c43943daa567e68e24d61ec0b8717bb04e",
+  "mode": "overview",
+  "sample_limit": 2,
+  "string_limit": 256,
+  "scope": {
+    "counted_graph": "main_graph_only",
+    "nested_subgraphs_expanded": false,
+    "nested_subgraphs_present": false
+  },
+  "model": {
+    "name": "demo.onnx",
+    "checker_status": "checker_passed",
+    "opset_imports": [
+      {
+        "domain": "",
+        "version": 11
+      }
+    ],
+    "main_graph_node_count": 5,
+    "tensor_count": 7,
+    "graph_input_count": 1,
+    "graph_output_count": 2
+  },
+  "preflight": {
+    "record_present": false,
+    "status": null,
+    "toolchain_compiler_checked": false
+  },
+  "allowed_claims": [
+    {
+      "id": "LIMIT.SCOPE",
+      "kind": "scope",
+      "source_path": "analysis.json:nodes/*/attributes",
+      "value": {
+        "counted_graph": "main_graph_only",
+        "nested_subgraphs_expanded": false,
+        "nested_subgraphs_present": false
+      },
+      "canonical_text": "仅统计已解析主图节点；嵌套子图未逐节点展开、不计入诊断统计"
+    },
+    {
+      "id": "LIMIT.EXECUTION",
+      "kind": "boundary",
+      "source_path": "tool_execution_boundary",
+      "value": {
+        "docker_quantization_executed": false,
+        "compiler_executed": false,
+        "runtime_placement_verified": false
+      },
+      "canonical_text": "本次静态检查未执行实际量化、编译或板端测试；未确认 CPU/BPU 分配；静态状态不等于完整兼容"
+    },
+    {
+      "id": "MODEL.NAME",
+      "kind": "metadata",
+      "source_path": "analysis.json:model/path",
+      "value": "demo.onnx",
+      "canonical_text": "模型名称：demo.onnx"
+    },
+    {
+      "id": "MODEL.OPSET",
+      "kind": "metadata",
+      "source_path": "analysis.json:model/opset_imports",
+      "value": [
+        {
+          "domain": "",
+          "version": 11
+        }
+      ],
+      "canonical_text": "OpSet 导入：[{\"domain\": \"\", \"version\": 11}]"
+    },
+    {
+      "id": "MODEL.MAIN_GRAPH_NODES",
+      "kind": "count",
+      "source_path": "analysis.json:model/node_count",
+      "value": 5,
+      "canonical_text": "已解析主图节点 5 个"
+    },
+    {
+      "id": "DIAG.STATUS_COUNTS",
+      "kind": "counts",
+      "source_path": "analysis.json:summary/all_status_counts",
+      "value": {
+        "NO_VIOLATION_FOUND": 2,
+        "VIOLATION": 1,
+        "NEEDS_VERIFICATION": 0,
+        "NOT_COVERED": 2
+      },
+      "canonical_text": "NO_VIOLATION_FOUND 2、VIOLATION 1、NEEDS_VERIFICATION 0、NOT_COVERED 2；四项合计 5 个主图节点"
+    },
+    {
+      "id": "DIAG.VIOLATION_NODES",
+      "kind": "count",
+      "source_path": "analysis.json:summary/all_status_counts/VIOLATION",
+      "value": 1,
+      "canonical_text": "唯一违规主图节点 1 个"
+    },
+    {
+      "id": "DIAG.FAIL_RECORDS",
+      "kind": "count",
+      "source_path": "analysis.json:diagnostics/*/results/status=FAIL",
+      "value": 1,
+      "canonical_text": "FAIL 规则记录共 1 条"
+    },
+    {
+      "id": "FAIL.0",
+      "kind": "rule_record",
+      "source_path": "analysis.json:diagnostics/0/results/0",
+      "value": {
+        "node_id": "main/node_000000",
+        "operator": "Conv",
+        "rule_id": "X5-CONV2D-KERNEL-H",
+        "field": "kernel_h",
+        "actual": 32,
+        "expected": {
+          "max": 31,
+          "min": 1
+        },
+        "reason_code": "BPU_CONSTRAINT_FAIL",
+        "source": {
+          "display_fragment": "{\"column\": \"X5 BPU 支持约束\", \"document\": \"RDK X3/X5 DOC / 模型算子支持列表\", \"retrieved_at\": \"2026-10-09\", \"section\": \"RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束\", \"url\": \"https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_developme",
+          "truncated": true,
+          "original_character_count": 339
+        },
+        "original_name": "oversized_kernel"
+      },
+      "canonical_text": "代表 FAIL：节点 main/node_000000（原名 oversized_kernel），算子 Conv，规则 X5-CONV2D-KERNEL-H，字段 kernel_h，实际值 32，允许值 {\"max\": 31, \"min\": 1}"
+    },
+    {
+      "id": "DIAG.OMITTED_FAILURES",
+      "kind": "count",
+      "source_path": "analysis.json:diagnostics/*/results/status=FAIL",
+      "value": 0,
+      "canonical_text": "另外 0 条 FAIL 记录未展示"
+    },
+    {
+      "id": "PREFLIGHT.STATUS",
+      "kind": "profile",
+      "source_path": "not_provided",
+      "value": {
+        "record_present": false,
+        "status": null,
+        "toolchain_compiler_checked": false
+      },
+      "canonical_text": "未提供 Profile 验证结果；本次总结未执行 Profile 检查"
+    }
+  ],
+  "diagnostics": {
+    "status_counts": {
+      "NO_VIOLATION_FOUND": 2,
+      "VIOLATION": 1,
+      "NEEDS_VERIFICATION": 0,
+      "NOT_COVERED": 2
+    },
+    "violation_node_count": 1,
+    "fail_rule_record_count": 1,
+    "representative_failures": [
+      {
+        "node_id": "main/node_000000",
+        "operator": "Conv",
+        "rule_id": "X5-CONV2D-KERNEL-H",
+        "field": "kernel_h",
+        "actual": 32,
+        "expected": {
+          "max": 31,
+          "min": 1
+        },
+        "reason_code": "BPU_CONSTRAINT_FAIL",
+        "source": {
+          "display_fragment": "{\"column\": \"X5 BPU 支持约束\", \"document\": \"RDK X3/X5 DOC / 模型算子支持列表\", \"retrieved_at\": \"2026-10-09\", \"section\": \"RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束\", \"url\": \"https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_developme",
+          "truncated": true,
+          "original_character_count": 339
+        },
+        "original_name": "oversized_kernel"
+      }
+    ],
+    "omitted_failure_record_count": 0
+  }
+}

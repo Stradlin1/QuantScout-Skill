@@ -1,4 +1,4 @@
-"""Load metadata without materializing large weights or overwriting the model."""
+"""Read main-graph metadata without rewriting the model or expanding subgraphs."""
 from pathlib import Path
 from collections import Counter
 import hashlib

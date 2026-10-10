@@ -12,7 +12,7 @@ QuantScout-Skill 是我为 AIGC 通识课程开发的 AI Skill。项目来自实
 - **使用方式：** 自然语言 + 终端；不提供网页界面。
 - **主要开发环境：** Windows VS Code + WSL Ubuntu + Codex 插件，也可使用原生 Ubuntu。
 - **兼容性设计：** 基于 `SKILL.md` 和 `.agents/skills/` 组织，便于在其他支持 Agent Skills 的 Agent 中复用。
-- **已发布基线：** V1.4；Python 包 `rdkx5-onnx-doctor` 0.5.0，分析 JSON Schema 1.3。后续版本以仓库实际提交为准。
+- **当前开发版本：** V1.5-S1.1；Python 包 `rdkx5-onnx-doctor` 0.5.0，分析 JSON Schema 1.3。后续版本以仓库实际提交为准。
 - **基本原则：** 只读 ONNX、保留来源与不确定性、不将静态检查等同于量化或部署验证。
 
 ## 一、项目背景：为什么需要它？
@@ -234,15 +234,41 @@ code .
 
 离线资料有固定上游 revision、原始文件校验和许可记录；读取缓存不等于本次已访问官网，也不能据此认定算子在实际编译中由 BPU 执行。
 
-### 5. V1.5-S1：只总结检查事实
+### 5. 事实摘要为什么是 Skill
 
-自然语言示例：“总结一下 reports/demo/analysis.json 的检查结果，只需要事实，不要分析和建议。”Skill 的 `summary_only` 分支生成独立 `summary.md`；只有 ONNX 时先使用现有 `analyze` 生成事实。完整诊断 `report.md` 保留原有行为，事实摘要不包含根因分析、风险排序或修改建议。
+`summary_only` 由当前 Agent 识别自然语言、选择模式、组织事实顺序和中文短句；Python 负责有界事实包、数值与来源 SHA 核验、安全发布。首版采用受限事实占位符句式，不宣传任意中文全语义“零幻觉”。不引入外部 LLM API 或密钥。
+
+| 自然语言 | 模式 | 输出 |
+| --- | --- | --- |
+| “简短总结检查结果，只要事实。” | `overview` | 3～4 节，主图概况、四状态、代表 FAIL、范围 |
+| “只列出异常，不要分析和建议。” | `anomalies` | FAIL、待验证、未覆盖分别陈列 |
+| “只看模型输入和输出。” | `io` | graph I/O 原始顺序、name/Shape/dtype、准确省略数 |
+
+Agent 路径使用下列工具，但草稿由 Agent 依照 [摘要契约](.agents/skills/rdk-x5-onnx-doctor/references/summary_only_contract.md) 组织：
 
 ```bash
-.venv/bin/python -m rdkx5_doctor summary --analysis reports/demo/analysis.json --limit 3
+.venv/bin/python -m rdkx5_doctor summary-facts --analysis reports/demo/analysis.json \
+  --mode overview --limit 2 --json --out reports/demo/summary_facts.json
+# Agent 阅读 allowed_claims，组织 summary_draft.json，再审读事实忠实度
+.venv/bin/python -m rdkx5_doctor summary-publish --analysis reports/demo/analysis.json \
+  --facts reports/demo/summary_facts.json --draft reports/demo/summary_draft.json \
+  --out reports/demo/summary.md
 ```
 
-仅支持已验证的 Schema 1.3；计数不一致会拒绝生成，已有 `summary.md` 不覆盖。可通过 `--preflight` 与 `--profile` 核对同次报告的既有 Profile 记录；未提供时明确标注未执行。`--official-lookup` 仅摘录已经确认属于当前运行的记录，不联网。
+已有 JSON 不重新 analyze；仅有 ONNX 时先在新目录分析一次。仅验证 Schema 1.3；计数错误、事实包篡改、来源 SHA 不符、无依据扩写会拒绝发布。所有产物独占新建，不能覆盖既有摘要或符号链接。Profile 可用成对的 `--preflight` / `--profile` 核对，发布时也须提供；缺少时记录未提供，不猜 MATCH。新事实包首版不接受官方查询 sidecar，不联网检索。
+
+普通 CLI `summary` 仍可直接使用，是 **Python 精简确定性 fallback，不是 AI 撰写**；显式 `--detailed` 保留历史七段详细模板。
+
+```bash
+.venv/bin/python -m rdkx5_doctor summary --analysis reports/demo/analysis.json
+.venv/bin/python -m rdkx5_doctor summary --analysis reports/new-run/analysis.json --detailed
+```
+
+公开 [demo 摘要](examples/demo-report/summary.md) 使用 Schema 1.3；[公开演示核对](docs/validations/V1_5_S1_1_Public_Demo.md) 与 [独立 Agent 验收状态](docs/validations/V1_5_S1_1_Agent_E2E.md) 分开记录。历史 Schema 1.0 快照保留在 `examples/legacy-demo-report/`，不作为新摘要默认输入。
+
+独立新会话验收已实际执行：首次 9/10 通过，既有摘要保护失败一次；修正后新会话复验通过。累计 11 次为 10 PASS、1 FAIL，失败记录保留。远程 CI 尚未触发（NOT_RUN），不等同本地测试通过。
+
+当前节点、算子及诊断统计仅限 **已解析主图节点**；嵌套子图未逐节点展开、不计入统计。ONNX checker 不等于子图规则检查。ONNX graph inputs 可能包含 initializer，不推定全部是纯数据输入。
 
 ### 6. 输出文件
 
@@ -283,7 +309,7 @@ reports/demo/
 
 ## 六、计划完善的功能
 
-项目范围固定为 **RDK X5 ONNX 量化前诊断**，不会扩展为自动量化或自动部署系统。V1.5-S1 已实现，后两项仍为后续规划：
+项目范围固定为 **RDK X5 ONNX 量化前诊断**，不会扩展为自动量化或自动部署系统。V1.5-S1.1 已实现三模式事实组织与发布，后两项仍为后续规划：
 
 | 功能 | 规划内容 | 边界 |
 | --- | --- | --- |

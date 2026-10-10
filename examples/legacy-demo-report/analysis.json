@@ -1,0 +1,1063 @@
+{
+  "schema_version": "1.0",
+  "model": {
+    "path": "examples/demo.onnx",
+    "sha256": "9f1da4be1ddb5e3b3873daffc4d5734014bf593120e7812d7a4736b316b2b116",
+    "sha256_scope": "ONNX protobuf only; external weight contents excluded",
+    "opset_imports": [
+      {
+        "domain": "",
+        "version": 11
+      }
+    ],
+    "inputs": [
+      {
+        "name": "image",
+        "shape": [
+          1,
+          2,
+          40,
+          8
+        ],
+        "dtype": "float32",
+        "producer": null,
+        "consumers": [
+          "main/node_000000"
+        ],
+        "kind": "graph_input",
+        "is_graph_input": true,
+        "is_graph_output": false,
+        "is_initializer": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "prediction",
+        "shape": [
+          1,
+          2,
+          9,
+          8
+        ],
+        "dtype": "float32",
+        "producer": "main/node_000003",
+        "consumers": [
+          "main/node_000004"
+        ],
+        "kind": "intermediate",
+        "is_graph_input": false,
+        "is_graph_output": true,
+        "is_initializer": false
+      },
+      {
+        "name": "auxiliary",
+        "shape": [
+          1,
+          4,
+          9,
+          8
+        ],
+        "dtype": "float32",
+        "producer": "main/node_000004",
+        "consumers": [],
+        "kind": "intermediate",
+        "is_graph_input": false,
+        "is_graph_output": true,
+        "is_initializer": false
+      }
+    ],
+    "node_count": 5,
+    "operator_counts": {
+      "Conv": 1,
+      "Relu": 1,
+      "Identity": 1,
+      "Add": 1,
+      "Concat": 1
+    },
+    "initializer_count": 1,
+    "missing_external_weights": [],
+    "validation": "checker_passed"
+  },
+  "ruleset": {
+    "id": "x5-bayes-e-onnx-conv2d",
+    "version": "0.1.0",
+    "toolchain_version": "unverified",
+    "toolchain_verified": false,
+    "sources": [
+      {
+        "title": "RDK X3/X5 DOC / 模型算子支持列表",
+        "url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "version": "网页最后更新 2026-08-04；检索快照 2026-10-09",
+        "section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束"
+      },
+      {
+        "title": "X5 芯片用户手册",
+        "url": "https://developer.d-robotics.cc/x5_sdk_doc/toolchain_development/intermediate/supported_op_list.html",
+        "version": "1.1.2",
+        "section": "ONNX / Conv"
+      },
+      {
+        "title": "X5 Chip User Manual",
+        "url": "https://developer.d-robotics.cc/x5_sdk_doc_v2.0.0/en/toolchain_development/intermediate/supported_op_list.html",
+        "version": "2.0.0",
+        "section": "ONNX / Conv"
+      }
+    ],
+    "rules": [
+      {
+        "id": "X5-CONV2D-KERNEL-H",
+        "check_type": "range",
+        "field": "kernel_h",
+        "min": 1,
+        "max": 31,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "卷积核空间维度超出官方范围"
+      },
+      {
+        "id": "X5-CONV2D-KERNEL-W",
+        "check_type": "range",
+        "field": "kernel_w",
+        "min": 1,
+        "max": 31,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "卷积核空间维度超出官方范围"
+      },
+      {
+        "id": "X5-CONV2D-KERNEL-VOLUME",
+        "check_type": "max_value",
+        "field": "kernel_elements_per_group",
+        "max": 32767,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "每组卷积核 C×H×W 超出官方上限"
+      },
+      {
+        "id": "X5-CONV2D-STRIDE-H",
+        "check_type": "range",
+        "field": "strides_h",
+        "min": 1,
+        "max": 256,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "步长超出官方基础范围"
+      },
+      {
+        "id": "X5-CONV2D-DILATION-H",
+        "check_type": "range",
+        "field": "dilation_h",
+        "min": 1,
+        "max": 16,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "膨胀率超出官方范围"
+      },
+      {
+        "id": "X5-CONV2D-STRIDE-W",
+        "check_type": "range",
+        "field": "strides_w",
+        "min": 1,
+        "max": 256,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "步长超出官方基础范围"
+      },
+      {
+        "id": "X5-CONV2D-DILATION-W",
+        "check_type": "range",
+        "field": "dilation_w",
+        "min": 1,
+        "max": 16,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "膨胀率超出官方范围"
+      },
+      {
+        "id": "X5-CONV2D-PAD-TOP",
+        "check_type": "range",
+        "field": "pads_top",
+        "min": 0,
+        "max": 256,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "有效 padding 超出官方 BPU 范围"
+      },
+      {
+        "id": "X5-CONV2D-PAD-LEFT",
+        "check_type": "range",
+        "field": "pads_left",
+        "min": 0,
+        "max": 256,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "有效 padding 超出官方 BPU 范围"
+      },
+      {
+        "id": "X5-CONV2D-PAD-BOTTOM",
+        "check_type": "range",
+        "field": "pads_bottom",
+        "min": 0,
+        "max": 256,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "有效 padding 超出官方 BPU 范围"
+      },
+      {
+        "id": "X5-CONV2D-PAD-RIGHT",
+        "check_type": "range",
+        "field": "pads_right",
+        "min": 0,
+        "max": 256,
+        "checkability": "auto_check",
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "有效 padding 超出官方 BPU 范围"
+      },
+      {
+        "id": "X5-CONV2D-DILATED-STRIDE-H",
+        "check_type": "equals",
+        "field": "strides_h",
+        "value": 1,
+        "checkability": "auto_check",
+        "when": {
+          "field": "has_dilation",
+          "op": "equals",
+          "value": true
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "膨胀卷积仅支持 stride=1"
+      },
+      {
+        "id": "X5-CONV2D-DILATED-DIVISIBLE-H",
+        "check_type": "equals",
+        "field": "dilation_h_divisible",
+        "value": true,
+        "checkability": "auto_check",
+        "when": {
+          "field": "has_dilation",
+          "op": "equals",
+          "value": true
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "输入空间维度须能被对应 dilation 整除"
+      },
+      {
+        "id": "X5-CONV2D-DILATED-STRIDE-W",
+        "check_type": "equals",
+        "field": "strides_w",
+        "value": 1,
+        "checkability": "auto_check",
+        "when": {
+          "field": "has_dilation",
+          "op": "equals",
+          "value": true
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "膨胀卷积仅支持 stride=1"
+      },
+      {
+        "id": "X5-CONV2D-DILATED-DIVISIBLE-W",
+        "check_type": "equals",
+        "field": "dilation_w_divisible",
+        "value": true,
+        "checkability": "auto_check",
+        "when": {
+          "field": "has_dilation",
+          "op": "equals",
+          "value": true
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "输入空间维度须能被对应 dilation 整除"
+      },
+      {
+        "id": "X5-CONV2D-DILATED-OUTPUT",
+        "check_type": "equals",
+        "field": "quantized_output_dtype",
+        "value": "int8",
+        "checkability": "conditional",
+        "when": {
+          "field": "has_dilation",
+          "op": "equals",
+          "value": true
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "膨胀卷积仅支持量化后 int8 输出；原 ONNX float32 无法证明实际量化精度"
+      },
+      {
+        "id": "X5-CONV2D-CHANNEL-IN_CHANNELS_PER_GROUP",
+        "check_type": "max_value",
+        "field": "in_channels_per_group",
+        "max": 8192,
+        "checkability": "conditional",
+        "when": {
+          "field": "in_channels_per_group",
+          "op": "greater_than",
+          "value": 8192
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "常规通道上限 8192 与末端子图放宽 65536 的适用性需核实；Kernel N 上限与输出通道条文的关系需审查"
+      },
+      {
+        "id": "X5-CONV2D-CHANNEL-OUT_CHANNELS_PER_GROUP",
+        "check_type": "max_value",
+        "field": "out_channels_per_group",
+        "max": 8192,
+        "checkability": "conditional",
+        "when": {
+          "field": "out_channels_per_group",
+          "op": "greater_than",
+          "value": 8192
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "常规通道上限 8192 与末端子图放宽 65536 的适用性需核实；Kernel N 上限与输出通道条文的关系需审查"
+      },
+      {
+        "id": "X5-CONV2D-CHANNEL-OUT_CHANNELS",
+        "check_type": "max_value",
+        "field": "out_channels",
+        "max": 8192,
+        "checkability": "conditional",
+        "when": {
+          "field": "out_channels",
+          "op": "greater_than",
+          "value": 8192
+        },
+        "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+        "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+        "message": "常规通道上限 8192 与末端子图放宽 65536 的适用性需核实；Kernel N 上限与输出通道条文的关系需审查"
+      }
+    ],
+    "exclusions": [
+      "Conv→Add shortcut 的 stride 措辞存在版本差异：RDK 为 2，手册为 {1,2}；不自动套用。",
+      "通道与 Kernel N/C 限制及量化末端放宽的交互：仅条件提示，不判 FAIL。",
+      "CPU 支持列中的 auto_pad、对称 pads 及 dtype 条款不作为 BPU 条款。",
+      "通用 shape、字节大小、真实内存、CPU/BPU 分配、延迟、量化精度未覆盖。"
+    ],
+    "review_status": "reviewed_with_exclusions"
+  },
+  "nodes": [
+    {
+      "id": "main/node_000000",
+      "original_name": "oversized_kernel",
+      "op_type": "Conv",
+      "domain": "",
+      "inputs": [
+        "image",
+        "weight"
+      ],
+      "outputs": [
+        "features"
+      ],
+      "attributes": {},
+      "conv": {
+        "scope": "conv2d",
+        "fields": {
+          "output_n": 1,
+          "pads_left": 0,
+          "in_channels_per_group": 2,
+          "output_c": 2,
+          "kernel_h": 32,
+          "quantized_subgraph_last": null,
+          "auto_pad": "NOTSET",
+          "output_h": 9,
+          "pads_bottom": 0,
+          "quantized_output_dtype": null,
+          "input_rank": 4,
+          "dilation_w_divisible": true,
+          "dilation_h_divisible": true,
+          "has_dilation": false,
+          "weight_shape": [
+            2,
+            2,
+            32,
+            1
+          ],
+          "kernel_w": 1,
+          "strides_h": 1,
+          "group": 1,
+          "kernel_elements_per_group": 64,
+          "output_dtype": "float32",
+          "input_c": 2,
+          "dilation_w": 1,
+          "shortcut_fusion": null,
+          "input_h": 40,
+          "input_dtype": "float32",
+          "output_w": 8,
+          "input_w": 8,
+          "dilation_h": 1,
+          "output_rank": 4,
+          "out_channels_per_group": 2,
+          "pads_top": 0,
+          "input_n": 1,
+          "strides_w": 1,
+          "pads_right": 0,
+          "out_channels": 2
+        },
+        "issues": []
+      }
+    },
+    {
+      "id": "main/node_000001",
+      "original_name": "branch_relu",
+      "op_type": "Relu",
+      "domain": "",
+      "inputs": [
+        "features"
+      ],
+      "outputs": [
+        "activated"
+      ],
+      "attributes": {}
+    },
+    {
+      "id": "main/node_000002",
+      "original_name": "residual_skip",
+      "op_type": "Identity",
+      "domain": "",
+      "inputs": [
+        "features"
+      ],
+      "outputs": [
+        "skip"
+      ],
+      "attributes": {}
+    },
+    {
+      "id": "main/node_000003",
+      "original_name": "merge",
+      "op_type": "Add",
+      "domain": "",
+      "inputs": [
+        "activated",
+        "skip"
+      ],
+      "outputs": [
+        "prediction"
+      ],
+      "attributes": {}
+    },
+    {
+      "id": "main/node_000004",
+      "original_name": "aux_head",
+      "op_type": "Concat",
+      "domain": "",
+      "inputs": [
+        "prediction",
+        "activated"
+      ],
+      "outputs": [
+        "auxiliary"
+      ],
+      "attributes": {
+        "axis": 1
+      }
+    }
+  ],
+  "tensors": [
+    {
+      "name": "image",
+      "shape": [
+        1,
+        2,
+        40,
+        8
+      ],
+      "dtype": "float32",
+      "producer": null,
+      "consumers": [
+        "main/node_000000"
+      ],
+      "kind": "graph_input",
+      "is_graph_input": true,
+      "is_graph_output": false,
+      "is_initializer": false
+    },
+    {
+      "name": "features",
+      "shape": [
+        1,
+        2,
+        9,
+        8
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000000",
+      "consumers": [
+        "main/node_000001",
+        "main/node_000002"
+      ],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": false
+    },
+    {
+      "name": "activated",
+      "shape": [
+        1,
+        2,
+        9,
+        8
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000001",
+      "consumers": [
+        "main/node_000003",
+        "main/node_000004"
+      ],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": false
+    },
+    {
+      "name": "skip",
+      "shape": [
+        1,
+        2,
+        9,
+        8
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000002",
+      "consumers": [
+        "main/node_000003"
+      ],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": false
+    },
+    {
+      "name": "prediction",
+      "shape": [
+        1,
+        2,
+        9,
+        8
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000003",
+      "consumers": [
+        "main/node_000004"
+      ],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": true,
+      "is_initializer": false
+    },
+    {
+      "name": "auxiliary",
+      "shape": [
+        1,
+        4,
+        9,
+        8
+      ],
+      "dtype": "float32",
+      "producer": "main/node_000004",
+      "consumers": [],
+      "kind": "intermediate",
+      "is_graph_input": false,
+      "is_graph_output": true,
+      "is_initializer": false
+    },
+    {
+      "name": "weight",
+      "shape": [
+        2,
+        2,
+        32,
+        1
+      ],
+      "dtype": "float32",
+      "producer": null,
+      "consumers": [
+        "main/node_000000"
+      ],
+      "kind": "initializer",
+      "is_graph_input": false,
+      "is_graph_output": false,
+      "is_initializer": true
+    }
+  ],
+  "edges": [
+    {
+      "source": "main/node_000000",
+      "target": "main/node_000001",
+      "tensor": "features"
+    },
+    {
+      "source": "main/node_000000",
+      "target": "main/node_000002",
+      "tensor": "features"
+    },
+    {
+      "source": "main/node_000001",
+      "target": "main/node_000003",
+      "tensor": "activated"
+    },
+    {
+      "source": "main/node_000001",
+      "target": "main/node_000004",
+      "tensor": "activated"
+    },
+    {
+      "source": "main/node_000002",
+      "target": "main/node_000003",
+      "tensor": "skip"
+    },
+    {
+      "source": "main/node_000003",
+      "target": "main/node_000004",
+      "tensor": "prediction"
+    }
+  ],
+  "diagnostics": [
+    {
+      "node_id": "main/node_000000",
+      "status": "VIOLATION",
+      "scope": "conv2d",
+      "results": [
+        {
+          "rule_id": "X5-CONV2D-KERNEL-H",
+          "field": "kernel_h",
+          "actual": 32,
+          "expected": {
+            "min": 1,
+            "max": 31
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "FAIL",
+          "reason": "卷积核空间维度超出官方范围"
+        },
+        {
+          "rule_id": "X5-CONV2D-KERNEL-W",
+          "field": "kernel_w",
+          "actual": 1,
+          "expected": {
+            "min": 1,
+            "max": 31
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-KERNEL-VOLUME",
+          "field": "kernel_elements_per_group",
+          "actual": 64,
+          "expected": {
+            "max": 32767
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-STRIDE-H",
+          "field": "strides_h",
+          "actual": 1,
+          "expected": {
+            "min": 1,
+            "max": 256
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-DILATION-H",
+          "field": "dilation_h",
+          "actual": 1,
+          "expected": {
+            "min": 1,
+            "max": 16
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-STRIDE-W",
+          "field": "strides_w",
+          "actual": 1,
+          "expected": {
+            "min": 1,
+            "max": 256
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-DILATION-W",
+          "field": "dilation_w",
+          "actual": 1,
+          "expected": {
+            "min": 1,
+            "max": 16
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-PAD-TOP",
+          "field": "pads_top",
+          "actual": 0,
+          "expected": {
+            "min": 0,
+            "max": 256
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-PAD-LEFT",
+          "field": "pads_left",
+          "actual": 0,
+          "expected": {
+            "min": 0,
+            "max": 256
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-PAD-BOTTOM",
+          "field": "pads_bottom",
+          "actual": 0,
+          "expected": {
+            "min": 0,
+            "max": 256
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-PAD-RIGHT",
+          "field": "pads_right",
+          "actual": 0,
+          "expected": {
+            "min": 0,
+            "max": 256
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "PASS",
+          "reason": "已检查规则未发现违规"
+        },
+        {
+          "rule_id": "X5-CONV2D-DILATED-STRIDE-H",
+          "field": "strides_h",
+          "actual": 1,
+          "expected": {
+            "equals": 1
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        },
+        {
+          "rule_id": "X5-CONV2D-DILATED-DIVISIBLE-H",
+          "field": "dilation_h_divisible",
+          "actual": true,
+          "expected": {
+            "equals": true
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        },
+        {
+          "rule_id": "X5-CONV2D-DILATED-STRIDE-W",
+          "field": "strides_w",
+          "actual": 1,
+          "expected": {
+            "equals": 1
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        },
+        {
+          "rule_id": "X5-CONV2D-DILATED-DIVISIBLE-W",
+          "field": "dilation_w_divisible",
+          "actual": true,
+          "expected": {
+            "equals": true
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        },
+        {
+          "rule_id": "X5-CONV2D-DILATED-OUTPUT",
+          "field": "quantized_output_dtype",
+          "actual": null,
+          "expected": {
+            "equals": "int8"
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "conditional",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        },
+        {
+          "rule_id": "X5-CONV2D-CHANNEL-IN_CHANNELS_PER_GROUP",
+          "field": "in_channels_per_group",
+          "actual": 2,
+          "expected": {
+            "max": 8192
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "conditional",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        },
+        {
+          "rule_id": "X5-CONV2D-CHANNEL-OUT_CHANNELS_PER_GROUP",
+          "field": "out_channels_per_group",
+          "actual": 2,
+          "expected": {
+            "max": 8192
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "conditional",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        },
+        {
+          "rule_id": "X5-CONV2D-CHANNEL-OUT_CHANNELS",
+          "field": "out_channels",
+          "actual": 2,
+          "expected": {
+            "max": 8192
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "conditional",
+          "status": "NOT_APPLICABLE",
+          "reason": "触发条件不成立"
+        }
+      ],
+      "issues": [],
+      "suggestions": [
+        {
+          "node_id": "main/node_000000",
+          "rule_id": "X5-CONV2D-KERNEL-H",
+          "category": "可能需要改变网络并重训",
+          "evidence": {
+            "field": "kernel_h",
+            "actual": 32,
+            "expected": {
+              "min": 1,
+              "max": 31
+            }
+          },
+          "text": "检查该节点导出属性 kernel_h 与训练结构是否一致；如为实际结构约束，评估替代卷积结构并重新训练或微调。评估将大卷积核改成多层较小卷积核；此方案通常改变计算与感受野组合，需要重新训练及任务指标对比。 不得直接删除节点。",
+          "validation_needed": "候选模型数值等价/任务指标验证，以及实际工具链 checker；无性能或精度承诺"
+        }
+      ]
+    },
+    {
+      "node_id": "main/node_000001",
+      "status": "NOT_COVERED",
+      "results": [],
+      "issues": [],
+      "suggestions": []
+    },
+    {
+      "node_id": "main/node_000002",
+      "status": "NOT_COVERED",
+      "results": [],
+      "issues": [],
+      "suggestions": []
+    },
+    {
+      "node_id": "main/node_000003",
+      "status": "NOT_COVERED",
+      "results": [],
+      "issues": [],
+      "suggestions": []
+    },
+    {
+      "node_id": "main/node_000004",
+      "status": "NOT_COVERED",
+      "results": [],
+      "issues": [],
+      "suggestions": []
+    }
+  ],
+  "traces": [
+    {
+      "node_id": "main/node_000000",
+      "predecessors": [],
+      "successors": [
+        "main/node_000001",
+        "main/node_000002"
+      ],
+      "upstream_neighbors": [],
+      "neighborhood": [
+        "main/node_000000",
+        "main/node_000001",
+        "main/node_000002",
+        "main/node_000003",
+        "main/node_000004"
+      ],
+      "downstream_nodes": [
+        "main/node_000001",
+        "main/node_000002",
+        "main/node_000003",
+        "main/node_000004"
+      ],
+      "reachable_outputs": [
+        "prediction",
+        "auxiliary"
+      ],
+      "representative_paths": [
+        {
+          "output_tensor": "prediction",
+          "nodes": [
+            "main/node_000000",
+            "main/node_000001",
+            "main/node_000003"
+          ],
+          "edges": [
+            {
+              "source": "main/node_000000",
+              "target": "main/node_000001",
+              "tensors": [
+                "features"
+              ]
+            },
+            {
+              "source": "main/node_000001",
+              "target": "main/node_000003",
+              "tensors": [
+                "activated"
+              ]
+            }
+          ]
+        },
+        {
+          "output_tensor": "auxiliary",
+          "nodes": [
+            "main/node_000000",
+            "main/node_000001",
+            "main/node_000004"
+          ],
+          "edges": [
+            {
+              "source": "main/node_000000",
+              "target": "main/node_000001",
+              "tensors": [
+                "features"
+              ]
+            },
+            {
+              "source": "main/node_000001",
+              "target": "main/node_000004",
+              "tensors": [
+                "activated"
+              ]
+            }
+          ]
+        }
+      ],
+      "paths_truncated": true,
+      "path_policy": "每个可达输出仅展示一条 BFS 最短代表路径；其他路径不枚举",
+      "reason": "依赖关系不等于下游违规、CPU 回退或精度下降",
+      "original_name": "oversized_kernel",
+      "evidence": [
+        {
+          "rule_id": "X5-CONV2D-KERNEL-H",
+          "field": "kernel_h",
+          "actual": 32,
+          "expected": {
+            "min": 1,
+            "max": 31
+          },
+          "source_url": "https://developer.d-robotics.cc/rdk_x_doc/Advanced_development/toolchain_development/intermediate/supported_op_list",
+          "source_section": "RDK X5 支持的 ONNX 算子列表 / Conv / 四维输入（conv2d）/ X5 BPU 支持约束",
+          "checkability": "auto_check",
+          "status": "FAIL",
+          "reason": "卷积核空间维度超出官方范围"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "all_status_counts": {
+      "VIOLATION": 1,
+      "NOT_COVERED": 4
+    },
+    "conv_status_counts": {
+      "VIOLATION": 1
+    },
+    "conv_node_count": 1,
+    "conv2d_checked_count": 1
+  },
+  "unverified_assumptions": [],
+  "limitations": [
+    "尚未用实际工具链验证：未经过 OpenExplorer/hb_mapper 实测。",
+    "V1 仅检查已收录的标准 ONNX Conv2D 规则，其他算子未覆盖。",
+    "静态检查不能确定真实 CPU/BPU 分配、量化误差、延迟、峰值 DDR 或任务精度。",
+    "路径只表示数据依赖，不表示下游节点违规。",
+    "模型 SHA256 仅覆盖 .onnx 文件；external data 内容不包含在该摘要中。"
+  ]
+}

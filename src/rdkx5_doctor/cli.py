@@ -13,7 +13,7 @@ DEFAULT_RULESET = Path(__file__).parent / 'resources' / 'rulesets' / 'x5-bayes-e
 STATES = ['VIOLATION', 'NEEDS_VERIFICATION', 'NOT_COVERED', 'NO_VIOLATION_FOUND']
 
 def parser():
-    p = argparse.ArgumentParser(description='RDK X5 ONNX Doctor V1.4：Skill 确定性工具、只读静态诊断')
+    p = argparse.ArgumentParser(description='RDK X5 ONNX Doctor V1.5-S1.1：只读静态诊断与 Agent 事实摘要')
     sub = p.add_subparsers(dest='command', required=True)
     a = sub.add_parser('analyze', help='分析模型，终端摘要 + JSON/Markdown 报告')
     a.add_argument('--model', required=True, type=Path)
@@ -25,6 +25,22 @@ def parser():
     summary.add_argument('--profile', type=Path, help='核对已有 preflight 所用的当前 Profile')
     summary.add_argument('--official-lookup', type=Path, help='已确认属于当前运行的官方查询记录；不会检索')
     summary.add_argument('--limit', type=int, default=3, help='每组最多展示的代表记录数量')
+    summary.add_argument('--detailed', action='store_true', help='显式使用历史七段详细模板')
+    for name, help_text in [('summary-facts', '导出三模式有界事实包，不读取 ONNX'),
+                            ('summary-publish', '重新核对事实并安全发布 Agent 草稿')]:
+        c = sub.add_parser(name, help=help_text)
+        c.add_argument('--analysis', required=True, type=Path)
+        c.add_argument('--preflight', type=Path)
+        c.add_argument('--profile', type=Path)
+        if name == 'summary-facts':
+            c.add_argument('--mode', choices=('overview', 'anomalies', 'io'), default='overview')
+            c.add_argument('--limit', type=int, default=2)
+            c.add_argument('--json', action='store_true', help='stdout 始终为纯 JSON')
+            c.add_argument('--out', type=Path)
+        else:
+            c.add_argument('--facts', required=True, type=Path)
+            c.add_argument('--draft', required=True, type=Path)
+            c.add_argument('--out', required=True, type=Path)
     gate = sub.add_parser('preflight', help='核对当前用户工具链 Profile，不判定实际编译支持')
     gate.add_argument('--analysis', required=True, type=Path)
     gate.add_argument('--profile', required=True, type=Path)
@@ -152,10 +168,21 @@ def display(value):
 def main(argv=None):
     args = parser().parse_args(argv)
     try:
+        if args.command == 'summary-facts':
+            from .summary_facts import export_fact_package
+            print(export_fact_package(args.analysis, mode=args.mode, limit=args.limit, out=args.out,
+                                      preflight=args.preflight, profile=args.profile))
+            return 0
+        if args.command == 'summary-publish':
+            from .summary_publish import publish_summary
+            target = publish_summary(args.analysis, args.facts, args.draft, args.out,
+                                     preflight=args.preflight, profile=args.profile)
+            print(f'Agent 事实摘要已发布：{display(target)}；校验仅覆盖受限事实引用，不证明任意中文语义')
+            return 0
         if args.command == 'summary':
             from .summary_report import write_summary
             target = write_summary(args.analysis, preflight=args.preflight, profile=args.profile,
-                                   official_lookup=args.official_lookup, limit=args.limit)
+                                   official_lookup=args.official_lookup, limit=args.limit, detailed=args.detailed)
             print(f'事实摘要已保存：{display(target)}')
             return 0
         if args.command == 'preflight':

@@ -9,3 +9,5 @@ diagnostic_changes records node before/after status, per-rule actual/status chan
 MODEL_ORIGINAL / ONNX_INFERRED / STATIC_DERIVED / UNKNOWN are axis origins; CONFLICT is an explicit Tensor fact status with both premises in conflicts. Symbols alone are not evidence of dynamic input. Public I/O retains the original model contract; no known dimension is replaced. Methods may return partial results under deterministic engineering budgets; all full finished after-counts are concrete integers.
 
 Softmax has static_bpu_path, compiler_configuration_verified=false and actual_runtime_placement=UNKNOWN separately from node status. ONNX opset11 suffix flattening differs from13 axis-only normalization; new semantics do not imply toolchain support. Resize records actual attrs, immutable small numeric sources and exact factor strings. Layout requires independent evidence. MatMul ONNX K/broadcast compatibility is distinct from documented asymmetric BPU pattern and dimensional limits. Every rule retains source/version/column and observed Tensor evidence.
+
+`model.node_count`、节点诊断及四状态统计仅包含已解析主图节点。嵌套子图以属性标记保留，但未展开、不计入逐节点统计；ONNX checker 不等于子图诊断。

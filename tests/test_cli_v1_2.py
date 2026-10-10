@@ -9,7 +9,7 @@ from rdkx5_doctor.cli import DEFAULT_RULESET, main
 @pytest.mark.parametrize('schema',['1.0','1.1'])
 def test_real_historical_queries(schema,capsys):
     root=Path(__file__).parents[1]
-    path=root/'examples'/('demo-report' if schema=='1.0' else 'v1_1_demo-report')/'analysis.json'
+    path=root/'examples'/('legacy-demo-report' if schema=='1.0' else 'v1_1_demo-report')/'analysis.json'
     assert json.loads(path.read_text())['schema_version']==schema
     for command,extra in [('nodes',[]),('inspect',['--node','main/node_000000']),('trace',['--node','main/node_000000'])]:
         assert main([command,'--analysis',str(path),*extra,'--json'])==0

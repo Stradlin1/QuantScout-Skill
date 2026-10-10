@@ -1,5 +1,6 @@
 # Repository instructions
 
+- For V1.5-S1.1 prioritize `docs/QuantScout_V1_5_S1_1_Codex_Development_Spec.md`; preserve historical interfaces and rules.
 - Prioritize `docs/RDK_X5_ONNX_Doctor_V1_4_Skill_Orchestration_Opset11_And_Official_Knowledge_Development_Spec.md`; preserve V1.3 contracts; follow `docs/TERMINAL_V1_SPEC.md` and `docs/RDK_X5_ONNX_Doctor_V1_1_Development_Spec.md`; preserve V1 compatibility. All interaction is terminal based; do not add HTML, web assets, browser or Netron dependencies.
 - Use `.venv/bin/python`; bootstrap with `python3 -m venv .venv` and `.venv/bin/python -m pip install -e '.[dev]'`.
 - Run CLI --help, rules validate and `.venv/bin/pytest -q` after relevant changes.
@@ -21,3 +22,8 @@
 - V1.4 is a Skill orchestration upgrade. Profile lives only in the Skill references YAML; preflight compares that user configuration, not universal X5 support. Schema stays 1.3, preflight/official lookup are independent sidecars.
 - Reviewed Opset11-only basic packs: Reshape/Split/MaxPool/AveragePool. Relu/Transpose remain NOT_COVERED with independent document knowledge. Retain all original 49 rules and source facts.
 - Official queries belong to Agent, never offline analyze. Group by operator/domain/opset, check X5 ONNX BPU/CPU columns, preserve fetched/cached/failed/not-requested distinction. No automatic YAML from web. Evidence validator checks provenance shape, not source truth.
+
+- Summary mode routes through summary-facts -> Agent constrained composition -> summary-publish. CLI summary is deterministic fallback; --detailed preserves the seven-section template. No external LLM SDK/API dependency.
+- All node/diagnostic counts refer to parsed main-graph nodes. Nested subgraphs are not expanded or counted in node-level diagnostics. Preserve Schema 1.3.
+- Independent fresh-session Agent routing tests must be recorded separately from implementation-session demo authorship. Unexecuted E2E is NOT_EXECUTED; untriggered remote CI is NOT_RUN.
+- summary_only must check the target before work and stop when it exists, including symlinks. "Write into existing summary.md" is not explicit overwrite authorization. Never bypass summary-publish by copying/replacing/renaming a temporary result over an existing file.

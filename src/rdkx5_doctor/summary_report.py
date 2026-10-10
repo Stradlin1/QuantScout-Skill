@@ -23,7 +23,7 @@ def markdown(facts, profile=None, limit=3, official=None):
     lines = ['# ONNX 检查事实摘要', '', '## 1. 模型基本信息', '',
              f'- 模型：{cell(Path(model["path"]).name) if isinstance(model.get("path"), str) else "未提供"}',
              f'- 格式检查：{value("validation")}', f'- OpSet：{value("opset_imports")}',
-             f'- 节点：{model["node_count"]}；Tensor：{facts["tensor_count"]}；输入：{count_io("inputs")}；输出：{count_io("outputs")}',
+             f'- 主图节点：{model["node_count"]}；Tensor：{facts["tensor_count"]}；输入：{count_io("inputs")}；输出：{count_io("outputs")}',
              f'- SHA256：{value("sha256")}（仅 ONNX 文件，不含 external data 内容）',
              '', '## 2. 当前 Profile 检查状态', '']
     if profile is None:
@@ -34,7 +34,7 @@ def markdown(facts, profile=None, limit=3, official=None):
                   'MATCH 仅表示当前用户工具链配置的版本条件匹配；MISMATCH 表示条件不匹配；UNKNOWN 表示无法确认。实际编译支持未验证。']
     lines += ['', '## 3. 静态规则检查统计', '', '| 最终诊断状态 | 节点数量 |', '| --- | ---: |']
     lines += [f'| {state} | {count} |' for state, count in facts['status_counts'].items()]
-    lines += ['', f'合计：{model["node_count"]} 个节点。', '', '| 算子（精确 op_type） | 节点数量 |', '| --- | ---: |']
+    lines += ['', f'合计：{model["node_count"]} 个主图节点。', '', '| 算子（精确 op_type） | 节点数量 |', '| --- | ---: |']
     lines += [f'| {cell(op)} | {count} |' for op, count in facts['operators'].items()]
     lines += ['', f'规则集：{cell(facts["ruleset"] and {k: facts["ruleset"].get(k) for k in ("id", "version", "toolchain_version")})}',
               '', '## 4. 已确定的静态约束冲突', '',
@@ -70,6 +70,7 @@ def markdown(facts, profile=None, limit=3, official=None):
         lines += [f'已有未知项原因码统计：{cell(shape.get("reason_counts"))}。',
                   '载荷已知/未知计数复用原始 Shape summary，受 Shape 和 dtype 共同影响。']
     lines += ['', '## 7. 检查范围说明', '',
+              '节点统计仅限已解析主图；嵌套子图未逐节点展开，不计入统计。',
               '本摘要仅整理当前 analysis.json 与明确提供且核对适用的 Profile 记录，不读取 report.md 的分析段落。',
               '本次总结未执行官方检索。',
               '未执行实际 Docker 量化、模型编译或板端测试。静态检查不确定实际 CPU/BPU 分配、精度、FPS 或延迟。',
@@ -86,7 +87,46 @@ def markdown(facts, profile=None, limit=3, official=None):
     return '\n'.join(lines)
 
 
-def write_summary(analysis, *, preflight=None, profile=None, official_lookup=None, limit=3):
+def compact_markdown(data, facts, profile=None, limit=3, official=None):
+    """Deterministic CLI fallback; never represented as Agent authorship."""
+    from .summary_facts import graph_scope, bounded, fact_text
+    def compact_cell(value):
+        return cell(fact_text(bounded(value)))
+    require(type(limit) is int and limit > 0, '代表记录 limit 必须大于零')
+    model = facts['model']
+    name = Path(model['path']).name if isinstance(model.get('path'), str) else None
+    lines = ['# ONNX 检查事实摘要', '', '## 模型概况', '',
+             f'模型：{compact_cell(name)}；OpSet：{compact_cell(model.get("opset_imports"))}；已解析主图节点 {model["node_count"]} 个。',
+             '', '## 静态检查', '',
+             '、'.join(f'{state} {count}' for state, count in facts['status_counts'].items()) + f'；合计 {model["node_count"]} 个主图节点。',
+             f'唯一违规节点 {facts["violation_node_count"]} 个；FAIL 规则记录 {facts["fail_record_count"]} 条。']
+    shown, nodes = 0, set()
+    for d in data['diagnostics']:
+        if d['node_id'] in nodes or shown >= min(limit, 2):
+            continue
+        r = next((r for r in d['results'] if r['status'] == 'FAIL'), None)
+        if r is not None:
+            lines.append(f'代表 FAIL：节点 {compact_cell(d["node_id"])}，规则 {compact_cell(r["rule_id"])}，实际值 {compact_cell(r.get("actual"))}，允许值 {compact_cell(r.get("expected"))}。')
+            nodes.add(d['node_id']); shown += 1
+    if facts['fail_record_count']:
+        lines.append(f'另外 {facts["fail_record_count"]-shown} 条 FAIL 记录未展示。')
+    else:
+        lines.append('本次已执行的规则未发现确定 FAIL。')
+    lines += ['', '## 检查范围', '',
+              f'Profile 状态：{compact_cell(profile["status"])}，仅表示当前配置版本条件比较，实际编译支持未验证。' if profile else '未提供 Profile 验证结果；本次总结未执行 Profile 检查。',
+              '仅统计已解析主图节点；嵌套子图未逐节点展开、不计入诊断统计。',
+              '未执行实际量化、编译或板端测试；UNKNOWN/NOT_COVERED 不表示 PASS，静态状态不代表模型完全兼容。']
+    if graph_scope(data)['nested_subgraphs_present'] is True:
+        lines.append('已有元信息记录了嵌套子图；嵌套子图未展开。')
+    if official is not None:
+        lines.append(f'已有官方查询记录 {len(official["records"])} 项；本次总结未检索。')
+        for r in official['records'][:min(limit, 2)]:
+            lines.append(f'查询状态 {compact_cell(r["lookup_status"])}；来源 {compact_cell(r["source"])}。')
+        lines.append(f'省略 {max(0,len(official["records"])-min(limit,2))} 项查询记录。')
+    return '\n'.join(lines) + '\n'
+
+
+def write_summary(analysis, *, preflight=None, profile=None, official_lookup=None, limit=3, detailed=False):
     analysis = Path(analysis)
     data = read_json(analysis)
     facts = extract_facts(data)
@@ -107,9 +147,7 @@ def write_summary(analysis, *, preflight=None, profile=None, official_lookup=Non
             imports = [i['version'] for i in data['model'].get('opset_imports', [])
                        if i['domain'] == key['domain'] or i['domain'] in ('', 'ai.onnx') and key['domain'] in ('', 'ai.onnx')]
             require(matches and key['imported_opset'] == (imports[0] if len(imports) == 1 else None), '官方查询键不适用于当前模型')
-    content = markdown(facts, record, limit, official)
+    content = markdown(facts, record, limit, official) if detailed else compact_markdown(data, facts, record, limit, official)
     target = analysis.parent / 'summary.md'
-    # Exclusive creation protects existing artifacts and symlinks, including models.
-    with target.open('x', encoding='utf-8') as stream:
-        stream.write(content)
-    return target
+    from .summary_facts import write_new
+    return write_new(target, content)

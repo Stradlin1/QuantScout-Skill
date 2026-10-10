@@ -23,7 +23,7 @@ def report(make_model,tmp_path,capsys):
 def test_extended_schema_unchanged_v1_diagnostics(report):
     path,model,out=report
     data=load_analysis(path)
-    baseline=json.loads((Path(__file__).parents[1]/'examples/demo-report/analysis.json').read_text())
+    baseline=json.loads((Path(__file__).parents[1]/'examples/legacy-demo-report/analysis.json').read_text())
     assert data['schema_version']=='1.3'
     assert set(baseline)<=set(data)
     for result,old in zip(data['diagnostics'][0]['results'],baseline['diagnostics'][0]['results']):
