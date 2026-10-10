@@ -1,9 +1,9 @@
 ---
 name: rdk-x5-onnx-doctor
-description: 用自然语言发起 RDK X5 ONNX 量化前静态预检、当前工具链 Opset 准入、节点约束解释、未知算子的官方手册查证，或单独查询 Shape、理论资源及优化候选。只读模型，不执行量化或部署。
+description: 用自然语言发起 RDK X5 ONNX 量化前静态预检、当前工具链 Opset 准入、节点约束解释、未知算子的官方手册查证，或只总结检查事实（summary_only）、单独查询 Shape、理论资源及优化候选。只读模型，不执行量化或部署。
 ---
 
-# RDK X5 ONNX Doctor V1.4
+# RDK X5 ONNX Doctor V1.5-S1
 
 这是 Agent 工作流；Python CLI 提供离线确定性事实，官网提供独立知识证据。
 执行用户授权的分析，不把一次 analyze 成功作为完整预检完成。
@@ -17,6 +17,7 @@ CLI 不在当前环境时按仓库 README 安装；移植时安装此 Python 包
 
 | 意图 | 执行与结束条件 |
 |---|---|
+| summary_only：只总结、不要分析和建议 | 读取 [事实总结契约](references/summary_only_contract.md)；已有 JSON → summary；只有 ONNX → 新目录 analyze → summary；保存 summary.md 后结束，不联网、不追踪、不输出建议 |
 | 完整量化前预检 | analyze → preflight → 异常/覆盖 → 证据驱动的节点查询 → 按需官方查询 → 分层中文结论 |
 | 只问 Opset | 复用报告元信息执行 preflight；没有报告时只读 analyze 获取，版本明确即结束 |
 | 已收录 Mul/Conv 等具体节点 | inspect，路径问题才 trace；引用逐规则 actual/expected/来源，不反复联网 |
@@ -24,7 +25,7 @@ CLI 不在当前环境时按仓库 README 安装；移植时安装此 Python 包
 | 只问资源/Shape | tensors/tensor 或 shapes/shape；不强制 preflight/规则深查/联网 |
 | 优化方向 | candidates/candidate，再 inspect/trace；信息不足不称冗余，不生成训练补丁 |
 
-只加载本次需要的参考文件；深度调查读 [诊断决策树](references/diagnosis_decision_tree.md)，回复前读 [答复契约](references/answer_contract.md)。
+只加载本次需要的参考文件；深度调查读 [诊断决策树](references/diagnosis_decision_tree.md)，非 summary_only 回复前读 [答复契约](references/answer_contract.md)。summary_only 仅采用其独立契约，聊天也不得附加建议。
 
 ## 完整预检
 

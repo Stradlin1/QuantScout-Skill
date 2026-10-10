@@ -19,6 +19,12 @@ def parser():
     a.add_argument('--model', required=True, type=Path)
     a.add_argument('--ruleset', type=Path, default=DEFAULT_RULESET)
     a.add_argument('--out', type=Path, required=True)
+    summary = sub.add_parser('summary', help='summary_only：验证已有事实并生成独立 summary.md')
+    summary.add_argument('--analysis', required=True, type=Path)
+    summary.add_argument('--preflight', type=Path)
+    summary.add_argument('--profile', type=Path, help='核对已有 preflight 所用的当前 Profile')
+    summary.add_argument('--official-lookup', type=Path, help='已确认属于当前运行的官方查询记录；不会检索')
+    summary.add_argument('--limit', type=int, default=3, help='每组最多展示的代表记录数量')
     gate = sub.add_parser('preflight', help='核对当前用户工具链 Profile，不判定实际编译支持')
     gate.add_argument('--analysis', required=True, type=Path)
     gate.add_argument('--profile', required=True, type=Path)
@@ -146,6 +152,12 @@ def display(value):
 def main(argv=None):
     args = parser().parse_args(argv)
     try:
+        if args.command == 'summary':
+            from .summary_report import write_summary
+            target = write_summary(args.analysis, preflight=args.preflight, profile=args.profile,
+                                   official_lookup=args.official_lookup, limit=args.limit)
+            print(f'事实摘要已保存：{display(target)}')
+            return 0
         if args.command == 'preflight':
             from .toolchain_profile import load_profile, preflight
             result = preflight(load_analysis(args.analysis).get('model', {}), load_profile(args.profile))

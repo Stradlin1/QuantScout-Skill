@@ -234,13 +234,24 @@ code .
 
 离线资料有固定上游 revision、原始文件校验和许可记录；读取缓存不等于本次已访问官网，也不能据此认定算子在实际编译中由 BPU 执行。
 
-### 5. 输出文件
+### 5. V1.5-S1：只总结检查事实
+
+自然语言示例：“总结一下 reports/demo/analysis.json 的检查结果，只需要事实，不要分析和建议。”Skill 的 `summary_only` 分支生成独立 `summary.md`；只有 ONNX 时先使用现有 `analyze` 生成事实。完整诊断 `report.md` 保留原有行为，事实摘要不包含根因分析、风险排序或修改建议。
+
+```bash
+.venv/bin/python -m rdkx5_doctor summary --analysis reports/demo/analysis.json --limit 3
+```
+
+仅支持已验证的 Schema 1.3；计数不一致会拒绝生成，已有 `summary.md` 不覆盖。可通过 `--preflight` 与 `--profile` 核对同次报告的既有 Profile 记录；未提供时明确标注未执行。`--official-lookup` 仅摘录已经确认属于当前运行的记录，不联网。
+
+### 6. 输出文件
 
 通常保存在 `reports/<本次运行目录>/` 下：
 
 ```text
 reports/demo/
 ├── analysis.json       # 完整结构化静态证据
+├── summary.md          # 可选：独立事实摘要（无分析和建议）
 ├── report.md           # 中文完整分析报告
 └── preflight.json      # 可选：当前用户 Profile 比对记录
 ```
@@ -272,11 +283,11 @@ reports/demo/
 
 ## 六、计划完善的功能
 
-项目范围固定为 **RDK X5 ONNX 量化前诊断**，不会扩展为自动量化或自动部署系统。后续规划聚焦三项能力：
+项目范围固定为 **RDK X5 ONNX 量化前诊断**，不会扩展为自动量化或自动部署系统。V1.5-S1 已实现，后两项仍为后续规划：
 
 | 功能 | 规划内容 | 边界 |
 | --- | --- | --- |
-| **AI 诊断事实总结（V1.5-S1）** | 从现有 `analysis.json` 和实际存在的 `preflight.json` 中提取统计，生成简洁的中文事实摘要 | **只总结，不增加原因分析、风险评价和修改建议** |
+| **AI 诊断事实总结（V1.5-S1，已实现）** | 从现有 `analysis.json` 和实际存在的 `preflight.json` 中提取统计，生成简洁的中文事实摘要 | **只总结，不增加原因分析、风险评价和修改建议** |
 | **Tensor 资源分类分析（V1.5-S2）** | 区分中间特征图、模型权重、Shape 参数、输出等，分别统计已知理论载荷 | 不将理论载荷称为真实硬件内存占用 |
 | **量化敏感结构提示（V1.5-S3）** | 基于可验证的计算图特征提示值得关注的结构 | 不预测量化误差、精度或编译结果 |
 
