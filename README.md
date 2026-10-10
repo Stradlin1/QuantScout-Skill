@@ -2,9 +2,11 @@
 
 **AIGC 通识课程个人结课作业｜面向 RDK X5 的 ONNX 量化前诊断 Agent Skill**
 
-这是我结合实际模型部署需求开发的 AI Skill。用户只需用自然语言提出“检查这个 ONNX 模型”或“只总结检查事实”，Agent 就能按任务需要调用静态分析工具、核对规则与证据，并输出中文诊断结果。
+QuantScout-Skill 是我结合 **地平线 RDK X5 模型部署实践**开发的 AI Agent Skill。它把原本需要人工逐项完成的 ONNX 结构检查、BPU 静态约束核对、节点定位和报告整理，组织为一套可以通过自然语言调用的诊断流程。
 
-**本作业想展示的不是“用 AI 写一个 Python 脚本”，而是让 Agent 依据 Skill 指令，完成任务识别、工具编排、事实引用和受约束的总结。** 确定性检查由 Python 负责，Agent 不凭空判断硬件兼容性。
+项目采用 **“Agent 智能编排 + Python 确定性分析 + 可追溯规则证据”** 的设计：Agent 理解检查需求、选择工具并组织中文结果；Python 负责模型解析、规则计算和事实校验。它不仅能够发现部分可确定的静态约束冲突，还能保留未知条件、定位问题节点，并按用户要求生成有证据的事实摘要。
+
+**这是一项可跨 Agent 复用的 Skill 工作流，不依赖 Codex 专有 API。** Codex 是当前主要开发与实际验收环境；其他具备 Agent Skills 加载能力和终端权限的 Agent 也可以尝试使用同一套 Python 工具与规则。
 
 | 项目信息 | 内容 |
 | --- | --- |
@@ -12,21 +14,22 @@
 | 项目名称 | **QuantScout-Skill** |
 | 实际应用 | 地平线 **RDK X5（Bayes-e）** 的 ONNX 模型量化前静态检查 |
 | 当前版本 | **V1.5-S1.1**；Python 包 `0.5.0`；Analysis Schema `1.3` |
-| 使用方式 | **自然语言 + 终端**，不需要网页界面 |
+| 使用方式 | **自然语言 + 终端**，可由不同支持 Agent Skills 的 Agent 编排 |
 | 运行环境 | Ubuntu / WSL，Python 3.10+；静态检查**无需 GPU、Docker 或开发板** |
 
-## 一、教师验收入口
+## 一、项目成果概览
 
-**不安装任何环境，也可以先查看已经提交的完整成果。**
+当前版本已包含 **完整的 Skill 入口、独立 Python 分析器、RDK X5 规则资料、公开 ONNX 演示报告及自动化测试**。无需安装环境，也可以先通过以下材料了解项目的实现效果。
 
-| 验收内容 | 查看位置 |
+| 项目成果 | 直接查看 |
 | --- | --- |
-| **Skill 怎样引导 AI 工作** | [Skill 入口 `SKILL.md`](.agents/skills/rdk-x5-onnx-doctor/SKILL.md) |
-| **是否真的检查了 ONNX 模型** | [完整诊断报告](examples/demo-report/report.md) · [结构化分析数据](examples/demo-report/analysis.json) |
-| **AI 是否参与了事实总结** | [独立 Agent 生成的摘要](examples/demo-report/summary.md) · [已校验的事实包](examples/demo-report/summary_facts.json) |
-| **有没有真实 Agent 测试** | [Codex 独立会话验收记录](docs/validations/V1_5_S1_1_Agent_E2E.md) |
-| **有没有自动化测试** | [GitHub Actions 实际运行](https://github.com/Stradlin1/QuantScout-Skill/actions/runs/38021532036) · [代表性测试代码](tests/test_summary_publish.py) |
-| **如何自己复现** | [第五节：教师复现](#五教师复现步骤) · [完整安装教程](docs/GETTING_STARTED.md) |
+| **实际模型检查报告** | [完整诊断报告](examples/demo-report/report.md) · [结构化分析数据](examples/demo-report/analysis.json) |
+| **AI 事实摘要** | [Agent 生成的摘要](examples/demo-report/summary.md) · [校验用事实包](examples/demo-report/summary_facts.json) |
+| **Agent 工作流设计** | [`SKILL.md` 入口](.agents/skills/rdk-x5-onnx-doctor/SKILL.md) · [事实摘要契约](.agents/skills/rdk-x5-onnx-doctor/references/summary_only_contract.md) |
+| **真实运行与测试** | [独立 Agent 验收记录](docs/validations/V1_5_S1_1_Agent_E2E.md) · [GitHub Actions](https://github.com/Stradlin1/QuantScout-Skill/actions/runs/38021773010) |
+| **使用与技术文档** | [快速上手](docs/GETTING_STARTED.md) · [架构介绍](docs/PROJECT_OVERVIEW.md) · [测试说明](docs/VALIDATION_STATUS.md) |
+
+项目面向 **RDK X5 ONNX 量化前静态诊断**，不依赖 Docker、GPU 或开发板完成这一阶段的检查，也不替代后续真实量化与部署验证。
 
 ## 二、我为什么选择这个题目？
 
@@ -42,53 +45,55 @@
 
 因此，它是一个**量化前诊断助手**，不是自动量化器、ONNX 编辑器或编译器。
 
-## 三、项目实现了哪些功能？
+## 三、已实现的核心成果
 
-| 已实现功能 | 能完成的工作 |
-| --- | --- |
-| ONNX 结构检查 | 读取并校验模型，提取主图节点、计算图连接、OpSet 和输入输出 |
-| BPU 静态规则检查 | 对已注册算子核对具体约束，记录实际参数与规则来源 |
-| 工具链 Profile 预检 | 比较模型 OpSet 是否匹配当前配置的版本条件 |
-| Shape 与 Tensor 检查 | 跟踪已知/未知维度、有限静态推断、Tensor 理论原始字节数 |
-| 节点查询与图追踪 | 定位异常节点，查询规则细节、输入输出依赖与 Tensor 信息 |
-| 结构候选检测 | 为部分已有计算图模式提供人工复核线索，不修改模型 |
-| 官方资料查证 | 必要时由 Agent 查阅官方文档或已保存的离线参考资料 |
-| **Agent 事实总结** | 按自然语言要求生成“简短总结”“只列异常”“只看输入输出”三类结果 |
+目前项目已经形成 **从 ONNX 模型读取、约束检查、证据定位，到 Agent 组织结果的完整静态诊断工作流**。相比单纯输出一份模型信息表，它更关注“具体发现了什么、证据在哪里、哪些地方尚不能确认”。
 
-目前规则库包含 **14 类算子、66 条检查或复核条目**。规则条目数量不代表全部 ONNX 算子均已覆盖，也不代表真实 BPU 编译、运行结果。
+| 核心模块 | 已实现能力 | 具体成果 |
+| --- | --- | --- |
+| **ONNX 静态解析与结构审计** | 读取主图节点、OpSet、输入输出和 Tensor 连接，进行格式检查、有限 Shape 推断及已知载荷统计 | `analysis.json`、`report.md` |
+| **RDK X5 BPU 专项规则诊断** | 将实际节点参数与已收录条件逐项比对，记录规则来源、实际值、允许范围与节点状态 | 版本化规则及可定位的逐规则证据 |
+| **计算图深度查询** | 追踪节点与模型输出的依赖关系，查询 Tensor、Shape、资源信息和部分需要人工复核的结构候选 | `inspect`、`trace`、`shape`、`tensor` 等命令 |
+| **Agent 自然语言任务编排** | 根据需求选择完整诊断、版本核对、局部追问或官方资料查证，不要求用户记住全部工具命令 | `SKILL.md` 与分支式诊断流程 |
+| **受事实约束的 AI 摘要** | 根据“简短总结”“仅列异常”“只看输入输出”切换摘要模式，Agent 组织内容，Python 复核后发布 | `summary_facts.json`、Agent 草稿、`summary.md` |
 
-### 核心问题：AI 到底做了什么？
+当前规则库包括 **14 类算子、66 条自动检查或复核条目**，覆盖了部分常见卷积、张量运算和注意力相关静态约束。**这些规则不是整个 ONNX 算子体系的完整兼容性证明**；未覆盖项会明确标记，而不是被自动判为通过。
 
-项目分成两部分：
+### 技术特色：AI 不直接“猜测”诊断结果
 
-**Python 静态诊断器**负责解析模型、计算数字、执行规则、核对状态和输出可复核的 JSON。这一部分即使不使用大模型也可以独立运行。
+项目没有把全部判断交给语言模型，而是将能力分成两层：
 
-**Agent Skill** 负责根据用户的自然语言选择任务、决定调用哪些工具、读取证据，以及组织合适的中文回答。例如：
+**底层分析器负责可复核的计算。** 包括节点计数、参数读取、规则检查、状态归类、Tensor 和 Shape 证据。Python CLI 可以独立运行，因此不同 Agent 使用时能够共享同一套检查口径。
+
+**Agent 负责理解任务和组织流程。** 通过 Skill 提供的工作流，它能根据不同请求选取所需的工具与证据，而不是固定执行一连串无关命令。
 
 ```text
-用户：“帮我检查这个 ONNX 模型”
-    → Agent 选择完整诊断流程
-    → 调用 analyze / preflight / inspect / 必要的资料查询
-    → 使用真实节点和规则证据组织中文结论
+“检查这个 ONNX 能否进入当前 RDK X5 量化流程”
+          ↓
+Agent 读取 Skill → 分析模型 → 核对 Profile 与静态规则
+          ↓
+定位已确认的冲突、未覆盖算子和未知条件
+          ↓
+引用实际节点、参数和规则依据组织答复
 
-用户：“只总结检查结果，不要分析和建议”
-    → Agent 识别 summary_only 意图
-    → Python 导出可信事实包（summary-facts）
-    → Agent 选择事实、标题、顺序和受限连接语
-    → Python 复核并发布摘要（summary-publish）
+“只总结已经得到的检查结果，不要分析和建议”
+          ↓
+Python summary-facts → Agent 组织中文草稿
+          ↓
+Python summary-publish → 核验事实并发布 Markdown
 ```
 
-**V1.5-S1.1 的重点是“AI 参与总结，但不能擅自编造事实”。**
+### AI 事实总结：支持三种自然语言模式
 
-它支持三种意图：
-
-| 用户说的话 | 模式 | 输出 |
+| 用户描述 | 模式 | 输出侧重点 |
 | --- | --- | --- |
-| “简短总结，只要事实。” | `overview` | 模型概况、四种检查状态、代表冲突、范围说明 |
-| “只列出异常，不要建议。” | `anomalies` | 已确定的 FAIL、待验证与未覆盖，分类呈现 |
-| “只看模型输入输出。” | `io` | Graph I/O 的名称、Shape、dtype 和省略数量 |
+| “简短总结，只要事实。” | `overview` | 模型概况、四类诊断状态、代表冲突、检查边界 |
+| “只列出异常，不要建议。” | `anomalies` | 已确定 FAIL、待验证和未覆盖项分类呈现 |
+| “只看模型输入输出。” | `io` | Graph I/O 名称、Shape、dtype 和真实省略数 |
 
-Agent 撰写草稿时必须引用 `{{FACT.ID}}`，不能直接手写不受检验的数字；`summary-publish` 会重新提取事实并核对来源 SHA256、引用和必要内容后才创建 Markdown 文件。当前只允许有限的中文连接语，**不是任意自由改写，也不声称从根本上消除了大模型幻觉**。
+V1.5-S1.1 增加了**机器可读的有界事实包与二次发布校验**。Agent 在摘要中引用 `{{FACT.ID}}`，发布器重新计算并核对事实、来源 SHA256、必须引用的内容及安全输出路径，减少自行编造数字或超出事实进行扩写的风险。
+
+这里的 AI **确实参与事实选择、顺序及受限中文组织**，而不是将 Python 固定模板冒充 AI 输出。但目前不允许任意自由改写，也不声称可对任意中文做形式化“零幻觉”保证。
 
 ## 四、一个可直接检查的实际案例
 
@@ -106,17 +111,15 @@ Agent 撰写草稿时必须引用 `{{FACT.ID}}`，不能直接手写不受检验
 
 这是一个**可解释、可复核的规则命中示例**，不是已经运行地平线编译器后得到的失败结果。
 
-老师可以顺序查看：[`analysis.json` 中的原始事实](examples/demo-report/analysis.json) → [`report.md` 完整报告](examples/demo-report/report.md) → [Agent 生成的 `summary.md`](examples/demo-report/summary.md)。
+可以依次查看：[`analysis.json` 中的原始事实](examples/demo-report/analysis.json) → [`report.md` 完整报告](examples/demo-report/report.md) → [Agent 生成的 `summary.md`](examples/demo-report/summary.md)。
 
-## 五、教师复现步骤
+## 五、如何使用与体验
 
-### 方式 A：无需运行，直接查看证据
+仓库提供公开示例模型 `examples/demo.onnx`，可以直接查看已提交的[诊断报告](examples/demo-report/report.md)和[事实摘要](examples/demo-report/summary.md)，也可以在自己的 Ubuntu / WSL 环境中运行。
 
-优先查看第一节的链接，即可核对 Skill 入口、静态报告、AI 摘要和独立测试记录。公开演示中，Agent 实际执行了 `summary-facts → 草稿 → summary-publish`，不是把 Python 的固定模板直接称为 AI 输出。
+### 1. 安装并运行静态诊断
 
-### 方式 B：终端复现静态检查
-
-请在 Ubuntu / WSL 中执行以下命令（需要 Python 3.10+）。仓库已经提供模型，不需要启动 Docker。
+要求 Python **3.10+**，无需配置 OpenExplorer Docker 或连接 RDK X5 开发板：
 
 ```bash
 git clone https://github.com/Stradlin1/QuantScout-Skill.git
@@ -125,48 +128,53 @@ cd QuantScout-Skill
 python3 -m venv .venv
 .venv/bin/python -m pip install -e .
 
-# 检查 CLI 和规则库
-.venv/bin/python -m rdkx5_doctor --help
-.venv/bin/python -m rdkx5_doctor rules validate
-
-# 新建一次诊断：如果输出目录已经存在，请换一个目录名
+# 对示例模型执行静态诊断
 .venv/bin/python -m rdkx5_doctor analyze \
   --model examples/demo.onnx \
-  --out reports/teacher-review
+  --out reports/quickstart
 
-# 查看明确触发静态冲突的节点
+# 查询有确定静态冲突的节点
 .venv/bin/python -m rdkx5_doctor nodes \
-  --analysis reports/teacher-review/analysis.json \
+  --analysis reports/quickstart/analysis.json \
   --status VIOLATION
-
-# 查看对应规则与参数
-.venv/bin/python -m rdkx5_doctor inspect \
-  --analysis reports/teacher-review/analysis.json \
-  --node oversized_kernel
 ```
 
-结果将保存在 `reports/teacher-review/`，主要包括 `analysis.json` 和 `report.md`。
+运行后，`reports/quickstart/` 中会有 `analysis.json` 和 `report.md`。如果目录已经存在，请指定新的输出目录；诊断和摘要工具默认保护已有输出。
 
-### 方式 C：用 Codex 验收 Agent Skill
+### 2. 与 AI Agent 自然语言交互
 
-在 VS Code 的 Ubuntu / WSL 工作区打开本仓库，使用有本地终端权限的 Codex Agent，发送以下指令：
+在具备 **Agent Skills 加载能力、工作区文件访问权限和终端工具调用能力**的 Agent 中打开本仓库，使用例如下面的请求：
 
-> 使用当前仓库的 `rdk-x5-onnx-doctor` Skill。读取 `reports/teacher-review/analysis.json`，简短总结检查结果，只要事实，不要原因分析和修改建议。将结果保存为同目录**新的** `summary.md`。已有 JSON 不要重新 analyze。
+> 使用项目中的 `rdk-x5-onnx-doctor` Skill，检查 `examples/demo.onnx` 的 RDK X5 量化前静态约束，说明已确认的异常及其规则依据，把报告保存到一个新的 `reports/` 子目录。不要修改模型或执行量化。
 
-随后可以单独提出“只列出异常”和“只看输入输出”，分别保存为不同的**新文件名**，观察 Agent 是否选择正确模式。
+如果已经有 `analysis.json`，也可以直接要求：
 
-验收时重点检查 Agent 是否真的读取 Skill、调用 `summary-facts` 和 `summary-publish`，以及输出是否与已有 JSON 的统计一致。
+> 总结已有的 `reports/quickstart/analysis.json`，只保留检查事实，不分析原因，不给修改建议，输出到同目录中尚不存在的 `summary.md`。不要重新分析模型。
 
-**如果没有 Codex，也可以检查 CLI 的确定性摘要，但这不等同于 AI 功能验收：**
+将这句话改为“只列出异常”或“只看输入输出”，即可触发不同的摘要工作流。**这一过程不限定使用 Codex**，具体的 Skill 发现方式和终端权限由各 Agent 客户端决定。
 
-```bash
-.venv/bin/python -m rdkx5_doctor summary \
-  --analysis reports/teacher-review/analysis.json
-```
+不使用 AI 时也可以运行 `python -m rdkx5_doctor summary` 得到确定性摘要，但它只是 Python CLI 功能，不应当作 Agent 撰写的演示。更多操作见 [详细使用教程](docs/GETTING_STARTED.md)。
 
-这条命令也会创建 `summary.md`；请在**还没有**同名文件时使用。默认拒绝覆盖已有摘要。完整说明见 [快速上手](docs/GETTING_STARTED.md)。
+## 六、多 Agent 复用：不局限于 Codex
 
-## 六、测试结果与实际边界
+QuantScout-Skill 采用 [Agent Skills](https://agentskills.io/) 的 `SKILL.md` 指令结构，将工作流与 Python 分析引擎解耦。**检查规则、报告 Schema 和 Python CLI 不依赖某个特定大模型或 Agent 厂商**，因此不同 Agent 可以复用同一套静态诊断工具，差异主要在于如何发现 Skill、调用终端及组织回答。
+
+当前仓库的 Skill 入口为 `.agents/skills/rdk-x5-onnx-doctor/SKILL.md`，可供支持相应项目级 Skill 目录的客户端读取。可考虑的使用环境包括：
+
+| Agent 环境 | 接入方式 | 本项目验证情况 |
+| --- | --- | --- |
+| **OpenAI Codex** | 当前仓库的 `.agents/skills/` | **已有独立自然语言端到端测试** |
+| **Cursor Agent** | 在支持项目级 Agent Skills 的版本中读取 Skill | **结构可复用，尚未完成本项目 E2E** |
+| **GitHub Copilot Agent** | 使用支持 Agent Skills 的工作区 / Agent 模式 | **结构可复用，尚未完成本项目 E2E** |
+| **Gemini CLI** | 在支持 Skill 发现的版本中加载项目 Skill | **结构可复用，尚未完成本项目 E2E** |
+| **OpenCode** | 在支持 Agent Skills 的版本中加载项目 Skill | **结构可复用，尚未完成本项目 E2E** |
+| **Claude Code** | 需适配 `.claude/skills/` 目录或设置映射，并核对相对引用 | **需适配，尚未完成本项目 E2E** |
+
+**跨 Agent 的关键不是简单复制一个 `SKILL.md`。** 目标客户端需要能读取对应的参考文件、在 Python 3.10+ 环境调用终端命令，并安装本仓库的 `rdkx5_doctor` 包。对于缺少联网检索能力的 Agent，纯离线静态检查与事实摘要仍有可使用的流程，官方资料查证则必须如实标明是否实际执行。
+
+目前已经实测和记录的是 **Codex**；表格中的其他工具是**可迁移的目标环境，并非已全部验证通过的兼容性认证**。项目对外名为 `QuantScout-Skill`，内部 Skill 仍叫 `rdk-x5-onnx-doctor`，Python 模块仍叫 `rdkx5_doctor`，更换 Agent 不需要改动规则算法。
+
+## 七、测试结果与实际边界
 
 | 测试项目 | 已有记录 | 查看证据 |
 | --- | --- | --- |
@@ -179,26 +187,26 @@ python3 -m venv .venv
 
 GitHub Actions 只验证确定性程序逻辑；独立 Codex 测试用于验证真实自然语言工作流。项目尚未开展正式的“普通 Prompt 与 Skill”对照实验，不应声称当前 Skill 必然优于所有其他工作方式。
 
-老师也可本地运行：
+也可以本地运行回归测试：
 
 ```bash
 .venv/bin/python -m pip install -e '.[dev]'
 .venv/bin/python -m pytest -q
 ```
 
-## 七、已知限制和后续工作
+## 八、已知限制和后续工作
 
 **本项目刻意不做：** Docker 量化、`hb_mapper` 编译、ONNX 模型改写、板端运行，以及实际 FPS、精度或 BPU 分配预测。它只负责进入量化流程之前的静态诊断。
 
-目前只统计 ONNX **主图节点**，未递归展开 If / Loop 等嵌套子图；`NOT_COVERED` 不代表硬件不支持，`NO_VIOLATION_FOUND` 也不是可部署保证。当前有 Codex 的真实验收记录，其他 Agent 尚未完成相同级别的验证。
+目前只统计 ONNX **主图节点**，未递归展开 If / Loop 等嵌套子图；`NOT_COVERED` 不代表硬件不支持，`NO_VIOLATION_FOUND` 也不是可部署保证。当前已有 Codex 的真实验收记录；同一套 Skill、规则和 Python 工具可以移植到其他支持 Agent Skills 的客户端，但其他 Agent 尚未完成相同级别的端到端验证。
 
 **尚未实现、不属于当前交付的功能：** V1.5-S2 Tensor 资源来源细分类、V1.5-S3 量化敏感结构候选提示，以及正式的无 Skill / 有 Skill 对照实验。
 
-## 八、项目文件与开发记录
+## 九、项目文件与开发记录
 
 ```text
 QuantScout-Skill/
-├── .agents/skills/rdk-x5-onnx-doctor/  # Skill 入口、意图分支与参考契约
+├── .agents/skills/rdk-x5-onnx-doctor/  # 可复用 Agent Skill 入口与执行契约
 ├── src/rdkx5_doctor/                   # Python 静态诊断、规则与发布校验
 ├── references/                         # 官方文档与规则审核依据
 ├── examples/                           # 可查看的 ONNX 示例和报告
@@ -212,4 +220,4 @@ QuantScout-Skill/
 
 ---
 
-**项目总结：** QuantScout-Skill 将一个真实的硬件部署前检查任务组织成“Agent 根据自然语言编排工作 + Python 给出可复核事实”的工作流。通过可运行的代码、公开示例、独立 Agent 会话和 CI 测试，展示了 AI Skill 在实际任务中的使用方式，而非仅提供一个提示词模板。
+**项目总结：** QuantScout-Skill 把实际的 RDK X5 量化前诊断任务整合为一套可跨 Agent 迁移的工作流：由 Agent 理解自然语言需求、调用工具并组织结果，由确定性 Python 引擎提供规则检查和可追溯证据。项目已有可运行的代码、公开报告、独立 Agent 验收及 CI 记录；后续可以在更多支持 Agent Skills 的工具中开展跨平台验证。
